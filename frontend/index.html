@@ -1,0 +1,46 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <img src="./assets/gdocs.png" alt="" />
+        <div>
+          <h1 id="document_title">Document sans titre</h1>
+          <div class="items">
+            <button>Fichier</button>
+            <button>Édition</button>
+            <button>Affichage</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <img src="./assets/csimonmeunier.png" alt="" />
+        <p>Charles Simon-Meunier</p>
+      </div>
+    </header>
+    <div class="toolbar">
+      <img src="./assets/search.png" alt="" />
+    </div>
+    <div class="page_holder">
+      <div class="page">
+        <textarea name="" id="" placeholder="teest"></textarea>
+      </div>
+    </div>
+
+    <script>
+      let document_title = "Document sans titre";
+
+      function updateTitle() {
+        document.getElementById("document_title").innerHTML = document_title;
+        document.title = document_title + " - Cheetah Docs";
+      }
+
+      updateTitle();
+    </script>
+  </body>
+</html>
