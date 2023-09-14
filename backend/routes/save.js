@@ -1,5 +1,5 @@
-const DocumentSchema = require('./schemas/document');
-const SaveSchema = require('./schemas/save');
+const DocumentSchema = require("../schemas/document");
+const SaveSchema = require('../schemas/save');
 
 var express = require('express');
 var router = express.Router();
