@@ -1,5 +1,4 @@
-import mongoose from "mongoose";
-import save from "./save";
+const mongoose = require("mongoose");
 
 const Schema = mongoose.Schema;
 
@@ -7,4 +6,4 @@ const DocumentSchema = new Schema({
   title: String,
 });
 
-export default mongoose.model("Document", DocumentSchema);
+module.exports = mongoose.model("Document", DocumentSchema);
