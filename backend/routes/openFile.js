@@ -1,8 +1,8 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
+/* POST Open a file based on his name. */
+router.post('/', function(req, res) {
   res.send('respond with a resource');
 });
 
