@@ -1,9 +1,14 @@
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <link rel="stylesheet" href="./index.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+    />
   </head>
   <body>
     <header>
@@ -12,9 +17,8 @@
         <div>
           <h1 id="document_title">Document sans titre</h1>
           <div class="items">
-            <button>Fichier</button>
-            <button>Édition</button>
-            <button>Affichage</button>
+            <button id="save">Enregistrer</button>
+            <button id="open">Ouvrir</button>
           </div>
         </div>
       </div>
@@ -24,23 +28,150 @@
       </div>
     </header>
     <div class="toolbar">
-      <img src="./assets/search.png" alt="" />
+      <select id="formatBlock" class="adv-option-button">
+        <option value="H1">H1</option>
+        <option value="H2">H2</option>
+        <option value="H3">H3</option>
+        <option value="H4">H4</option>
+        <option value="H5">H5</option>
+        <option value="H6">H6</option>
+      </select>
+
+      <!-- Font -->
+      <select id="fontName" class="adv-option-button"></select>
+      <select id="fontSize" class="adv-option-button"></select>
+
+      <!-- Color -->
+      <div class="input-wrapper">
+        <input type="color" id="foreColor" class="adv-option-button" />
+        <button>
+          <label for="foreColor"><i class="fa-solid fa-a"></i></label>
+        </button>
+      </div>
+      <div class="input-wrapper">
+        <input type="color" id="backColor" class="adv-option-button" />
+        <button>
+          <label for="backColor"><i class="fa-solid fa-highlighter"></i></label>
+        </button>
+      </div>
+      <button id="bold" class="option-button format">
+        <i class="fa-solid fa-bold"></i>
+      </button>
+      <button id="italic" class="option-button format">
+        <i class="fa-solid fa-italic"></i>
+      </button>
+      <button id="underline" class="option-button format">
+        <i class="fa-solid fa-underline"></i>
+      </button>
+      <button id="strikethrough" class="option-button format">
+        <i class="fa-solid fa-strikethrough"></i>
+      </button>
+      <button id="superscript" class="option-button script">
+        <i class="fa-solid fa-superscript"></i>
+      </button>
+      <button id="subscript" class="option-button script">
+        <i class="fa-solid fa-subscript"></i>
+      </button>
     </div>
     <div class="page_holder">
       <div class="page">
-        <textarea name="" id="" placeholder="teest"></textarea>
+        <div
+          name=""
+          id="page-content"
+          contenteditable="true"
+          tabindex="0"
+        ></div>
       </div>
     </div>
 
     <script>
       let document_title = "Document sans titre";
+      let cursor_pos = 0;
+
+      let fontList = [
+        "Arial",
+        "Verdana",
+        "Times New Roman",
+        "Garamond",
+        "Georgia",
+        "Courier New",
+        "cursive",
+      ];
+      let document_content = "";
+      let document_content_element = document.getElementById("page-content");
+      let optionsButtons = document.querySelectorAll(".option-button");
+      let fontSizeRef = document.getElementById("fontSize");
+      let advancedOptionButton =
+        document.querySelectorAll(".adv-option-button");
+
+      let saveButton = document.getElementById("save");
+      let openButton = document.getElementById("open");
+
+      fontList.map((value) => {
+        let option = document.createElement("option");
+        option.value = value;
+        option.innerHTML = value;
+        fontName.appendChild(option);
+      });
+
+      for (let i = 1; i <= 7; i++) {
+        let option = document.createElement("option");
+        option.value = i;
+        option.innerHTML = i;
+        fontSizeRef.appendChild(option);
+      }
 
       function updateTitle() {
         document.getElementById("document_title").innerHTML = document_title;
         document.title = document_title + " - Cheetah Docs";
       }
 
-      updateTitle();
+      function updateContent() {
+        document_content = document_content_element.value;
+      }
+
+      const modifyText = (command, defaultUi, value) => {
+        document.execCommand(command, defaultUi, value);
+      };
+
+      function setTitle() {
+        console.log(window.getSelection().type);
+      }
+
+      optionsButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          modifyText(button.id, false, null);
+        });
+      });
+
+      advancedOptionButton.forEach((button) => {
+        button.addEventListener("change", () => {
+          modifyText(button.id, false, button.value);
+        });
+      });
+
+      saveButton.addEventListener("click", () => {
+        console.log(document_content_element.innerHTML);
+      });
+
+      openButton.addEventListener("click", () => {
+        alert(cursor_position());
+      });
+
+      function cursor_position() {
+        var sel = document.getSelection();
+        sel.modify("extend", "backward", "paragraphboundary");
+        var pos = sel.toString().length;
+        if (sel.anchorNode != undefined) sel.collapseToEnd();
+
+        cursor_pos = pos;
+        return pos;
+      }
+
+      document.onload = () => {
+        document_content_element.focus();
+        updateTitle();
+      };
     </script>
   </body>
 </html>
