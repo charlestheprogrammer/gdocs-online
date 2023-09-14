@@ -1,35 +1,19 @@
-const { MongoClient } = require('mongodb');
+const mongoose = require('mongoose');
 
-const mongoURI = 'mongodb://localhost:27017/nlpf';
-let db;
-let client;
-
-function connectToDB() {
-  return new Promise((resolve, reject) => {
-    MongoClient.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true }, (err, connectedClient) => {
-      if (err) {
-        console.error('Erreur de connexion à MongoDB :', err);
-        reject(err);
-      } else {
-        console.log('Connecté à MongoDB');
-        db = connectedClient.db();
-        client = connectedClient;
-        resolve();
-      }
-    });
-  });
-}
-
-function closeDB() {
-  if (client) {
-    client.close(() => {
-      console.log('Déconnexion de MongoDB');
-    });
+async function connectToDB(mongoURI) {
+  try {
+    await mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+    console.log('Connecté à MongoDB via Mongoose');
+  } catch (err) {
+    console.error('Impossible de se connecter à la base de données :', err);
+    throw err;
   }
 }
 
-function getDB() {
-  return db;
+function closeDB() {
+  mongoose.connection.close(() => {
+    console.log('Déconnexion de MongoDB via Mongoose');
+  });
 }
 
-module.exports = { connectToDB, closeDB, getDB };
+module.exports = { connectToDB, closeDB };

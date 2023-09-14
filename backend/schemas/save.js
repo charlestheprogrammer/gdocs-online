@@ -9,4 +9,6 @@ const SaveSchema = new Schema({
   
 });
 
-module.exports = mongoose.model("Save", SaveSchema);
+const Save = mongoose.model("Save", SaveSchema);
+
+module.exports = Save;

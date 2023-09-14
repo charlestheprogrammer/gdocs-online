@@ -6,4 +6,6 @@ const DocumentSchema = new Schema({
   title: String,
 });
 
-module.exports = mongoose.model("Document", DocumentSchema);
+const Document = mongoose.model("Document", DocumentSchema);
+
+module.exports = Document;
