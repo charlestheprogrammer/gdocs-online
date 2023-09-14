@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-
+const dotenv = require("dotenv");
+const mongoose = require("mongoose");
+dotenv.config();
 /**
  * Module dependencies.
  */
@@ -7,6 +9,7 @@
 var app = require('../app');
 var debug = require('debug')('backend:server');
 var http = require('http');
+const mongoDB = process.env.MONGO_URI;
 
 /**
  * Get port from environment and store in Express.
@@ -81,10 +84,13 @@ function onError(error) {
  * Event listener for HTTP server "listening" event.
  */
 
-function onListening() {
+async function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
+  await mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB connected..."))
+  .catch(err => console.log(err));
 }
