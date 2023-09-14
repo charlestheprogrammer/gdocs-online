@@ -4,7 +4,7 @@ const SaveSchema = require('../schemas/save');
 var express = require('express');
 var router = express.Router();
 
-/* POST Open a file based on his name. */
+/* GET Open a file based on his name. */
 router.get('/', async function(req, res) {
   var documentFound = await DocumentSchema.findById(req.body.title).exec();
   var saveFound = await SaveSchema.findOne({document: documentFound}).sort({date: -1}).exec();
