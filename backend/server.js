@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const cors = require('cors');
+
 const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI;
 
@@ -9,7 +11,15 @@ const db = require('./db');
 const User = require('./schemas/user');
 const Document = require('./schemas/document');
 
+app.options("*", cors());
+
+var openFileRouter = require('./routes/openFile');
+var saveRouter = require('./routes/save');
+
 app.use(express.json());
+
+app.use('/openFile', openFileRouter);
+app.use('/save', saveRouter);
 
 async function startServer() {
     // Connexion à la base de données
@@ -25,14 +35,19 @@ async function startServer() {
 
     // POST /api/login : identification d'un utilisateur
     app.post('/api/login', async (req, res) => {
+        res.set('Access-Control-Allow-Origin', '*')
         try {
-            const newUser = req.body;
-            const existingItem = await User.findOne({ name: newUser.name });
+            const username = req.body.name;
+            const existingItem = await User.findOne({ name: username });
+            console.log(existingItem);
 
             if (existingItem) {
                 res.status(200).json({ message: 'Vous êtes identifié' });
             } else {
-                const user = new User(newUser);
+                const user = new User({
+                    name: username,
+                });
+                console.log(user);
                 await user.save();
                 res.status(201).json({ message: 'Vous êtes inscrit' });
             }
@@ -44,6 +59,7 @@ async function startServer() {
 
     // GET /api/users : récupération de la liste des utilisateurs
     app.get('/api/users', async (req, res) => {
+        res.set('Access-Control-Allow-Origin', '*')
         try {
             const items = await User.find({});
             res.status(200).json(items);
