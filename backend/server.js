@@ -82,6 +82,7 @@ async function startServer() {
 
     // GET /api/documents : récupération de la liste des documents
     app.get('/api/documents', async (req, res) => {
+        res.set('Access-Control-Allow-Origin', '*')
         try {
             const items = await Document.find({});
             res.status(200).json(items);

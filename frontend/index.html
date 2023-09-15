@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title></title>
     <link rel="stylesheet" href="./index.css" />
     <link
       rel="stylesheet"
@@ -15,20 +15,27 @@
       <input type="text" placeholder="Nom d'utilisateur" id="username" />
       <button onclick="identify()">Continuer</button>
     </div>
+    <div class="openModal" style="display: none" onclick="closeOpenModal()">
+      <div class="content">
+        <h1>Ouvrez un fichier</h1>
+        <ul id="availableFiles"></ul>
+      </div>
+    </div>
     <header>
       <div>
         <img src="./assets/gdocs.png" alt="" />
         <div>
-          <h1 id="document_title">Document sans titre</h1>
+          <input type="text" id="document_title" class="document_title" />
           <div class="items">
             <button id="save">Enregistrer</button>
             <button id="open">Ouvrir</button>
+            <p id="temp_info"></p>
           </div>
         </div>
       </div>
       <div>
         <img src="./assets/csimonmeunier.png" alt="" />
-        <p>Charles Simon-Meunier</p>
+        <p id="user_name"></p>
       </div>
     </header>
     <div class="toolbar">
@@ -47,13 +54,13 @@
 
       <!-- Color -->
       <div class="input-wrapper">
-        <input type="color" id="foreColor" class="adv-option-button" />
+        <input type="color" id="foreColor" class="colors-option-button" />
         <button>
           <label for="foreColor"><i class="fa-solid fa-a"></i></label>
         </button>
       </div>
       <div class="input-wrapper">
-        <input type="color" id="backColor" class="adv-option-button" />
+        <input type="color" id="backColor" class="colors-option-button" />
         <button>
           <label for="backColor"><i class="fa-solid fa-highlighter"></i></label>
         </button>
@@ -78,7 +85,7 @@
       </button>
     </div>
     <div class="page_holder">
-      <div class="page">
+      <div class="page" id="page_holder">
         <div
           name=""
           id="page-content"
@@ -107,6 +114,9 @@
       let fontSizeRef = document.getElementById("fontSize");
       let advancedOptionButton =
         document.querySelectorAll(".adv-option-button");
+      let colorsOptionButton = document.querySelectorAll(
+        ".colors-option-button"
+      );
 
       let saveButton = document.getElementById("save");
       let openButton = document.getElementById("open");
@@ -126,7 +136,7 @@
       }
 
       function updateTitle() {
-        document.getElementById("document_title").innerHTML = document_title;
+        document.getElementById("document_title").value = document_title;
         document.title = document_title + " - Cheetah Docs";
       }
 
@@ -154,25 +164,80 @@
         });
       });
 
-      saveButton.addEventListener("click", async () => {
-        const response = await fetch("http://localhost:3000/save", {body: JSON.stringify({id: localStorage.getItem("idDocument"), title: document_title,content: document_content_element.innerHTML}), method: "POST", headers: {"Content-Type": "application/json"}});
-        const body = await response.json();
-        localStorage.setItem("idDocument", body.document.id);
+      colorsOptionButton.forEach((button) => {
+        button.addEventListener("input", () => {
+          modifyText(button.id, false, button.value);
+        });
       });
+
+      saveButton.addEventListener("click", async () => {
+        const responseAsync = fetch("http://localhost:3000/save", {
+          body: JSON.stringify({
+            id: localStorage.getItem("idDocument"),
+            title: document_title,
+            content: document_content_element.innerHTML,
+          }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        document.getElementById("temp_info").innerHTML = "Enregistrement...";
+        const response = await responseAsync;
+        const body = await response.json();
+        localStorage.setItem("idDocument", body.document._id);
+        setTimeout(() => {
+          document.getElementById("temp_info").innerHTML = "Enregistré !";
+        }, 600);
+        setTimeout(() => {
+          document.getElementById("temp_info").innerHTML = "";
+        }, 2000);
+      });
+
+      function closeOpenModal() {
+        let openModal = document.querySelector(".openModal");
+        openModal.style.display = "none";
+      }
 
       openButton.addEventListener("click", () => {
-        alert(cursor_position());
+        fetch("http://localhost:3000/api/documents")
+          .then((res) => {
+            res.json().then((body) => {
+              let openModal = document.querySelector(".openModal");
+              openModal.style.display = "flex";
+              let availableFiles = document.getElementById("availableFiles");
+              availableFiles.innerHTML = "";
+              body.forEach((doc) => {
+                let li = document.createElement("li");
+                li.innerHTML = doc.title;
+                li.addEventListener("click", () => {
+                  openFile(doc._id);
+                  let openModal = document.querySelector(".openModal");
+                  openModal.style.display = "none";
+                });
+                availableFiles.appendChild(li);
+              });
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       });
 
-      function cursor_position() {
-        var sel = document.getSelection();
-        sel.modify("extend", "backward", "paragraphboundary");
-        var pos = sel.toString().length;
-        if (sel.anchorNode != undefined) sel.collapseToEnd();
+      const page_holder = document.getElementById("page_holder");
 
-        cursor_pos = pos;
-        return pos;
-      }
+      page_holder.addEventListener("mousemove", function (event) {
+        const pageSize = {
+          width: page_holder.offsetWidth,
+          height: page_holder.offsetHeight,
+        };
+        var rect = page_holder.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+
+        cursor_pos = {
+          x: x / pageSize.width,
+          y: y / pageSize.height,
+        };
+      });
 
       function identify() {
         let username = document.getElementById("username").value;
@@ -190,6 +255,9 @@
               console.log(res);
               let modal = document.querySelector(".modal");
               modal.style.display = "none";
+              localStorage.setItem("username", username);
+              document.getElementById("user_name").innerHTML =
+                localStorage.getItem("username");
             })
             .catch((err) => {
               console.log(err);
@@ -197,8 +265,32 @@
         }
       }
 
-      document.onload = () => {
+      function openFile(document_id) {
+        fetch("http://localhost:3000/openFile/" + document_id)
+          .then((res) => {
+            res.json().then((data) => {
+              document_title = data.document.title;
+              document_content_element.innerHTML = data.content;
+              localStorage.setItem("idDocument", document_id);
+              updateTitle();
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+
+      window.onload = () => {
         document_content_element.focus();
+        if (localStorage.getItem("username") != null) {
+          let modal = document.querySelector(".modal");
+          modal.style.display = "none";
+          document.getElementById("user_name").innerHTML =
+            localStorage.getItem("username");
+        }
+        if (localStorage.getItem("idDocument") != null) {
+          openFile(localStorage.getItem("idDocument"));
+        }
         updateTitle();
       };
     </script>
