@@ -39,7 +39,6 @@ async function startServer() {
         try {
             const username = req.body.name;
             const existingItem = await User.findOne({ name: username });
-            console.log(existingItem);
 
             if (existingItem) {
                 res.status(200).json({ message: 'Vous êtes identifié' });
@@ -47,7 +46,6 @@ async function startServer() {
                 const user = new User({
                     name: username,
                 });
-                console.log(user);
                 await user.save();
                 res.status(201).json({ message: 'Vous êtes inscrit' });
             }
