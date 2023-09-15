@@ -154,8 +154,10 @@
         });
       });
 
-      saveButton.addEventListener("click", () => {
-        console.log(document_content_element.innerHTML);
+      saveButton.addEventListener("click", async () => {
+        const response = await fetch("http://localhost:3000/save", {body: JSON.stringify({id: localStorage.getItem("idDocument"), title: document_title,content: document_content_element.innerHTML}), method: "POST", headers: {"Content-Type": "application/json"}});
+        const body = await response.json();
+        localStorage.setItem("idDocument", body.document.id);
       });
 
       openButton.addEventListener("click", () => {
