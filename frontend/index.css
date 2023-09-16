@@ -245,6 +245,42 @@ header>div:last-of-type img:hover+p {
     overflow: auto;
     flex-grow: 1;
     padding: 0 1rem;
+    position: relative;
+}
+
+.page_holder .users_cursors {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.page_holder .users_cursors .cursor {
+    position: absolute;
+    pointer-events: none;
+    align-items: center;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #343434;
+}
+
+.page_holder .users_cursors .cursor p {
+    margin: 0;
+    padding: 0;
+    font-size: .8rem;
+    font-weight: 700;
+    color: #343434;
+    padding-left: .2rem;
+    letter-spacing: 0.3px;
+    position: absolute;
+    top: 2px;
+    left: 23px;
+    pointer-events: none;
 }
 
 .page {
@@ -258,6 +294,7 @@ header>div:last-of-type img:hover+p {
     padding: 6rem 7rem;
     min-height: 100vh;
     height: auto;
+    position: relative;
 }
 
 .page>div {

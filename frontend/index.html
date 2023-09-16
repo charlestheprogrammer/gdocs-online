@@ -92,6 +92,7 @@
           contenteditable="true"
           tabindex="0"
         ></div>
+        <div class="users_cursors"></div>
       </div>
     </div>
 
@@ -107,6 +108,20 @@
         "Georgia",
         "Courier New",
         "cursive",
+      ];
+      const user_colors = [
+        "#ffc8dd",
+        "#d4a373",
+        "#caffbf",
+        "#a0c4ff",
+        "#f08080",
+        "#bee1e6",
+        "#70d6ff",
+        "#ff9770",
+        "#84dcc6",
+        "#ee6055",
+        "#809bce",
+        "#7161ef",
       ];
       let document_content = "";
       let document_content_element = document.getElementById("page-content");
@@ -142,6 +157,14 @@
 
       function updateContent() {
         document_content = document_content_element.value;
+        socket.send(
+          JSON.stringify({
+            type: "updateDocument",
+            user: localStorage.getItem("username"),
+            document: localStorage.getItem("idDocument"),
+            content: document_content_element.innerHTML,
+          })
+        );
       }
 
       const modifyText = (command, defaultUi, value) => {
@@ -237,6 +260,17 @@
           x: x / pageSize.width,
           y: y / pageSize.height,
         };
+        socket.send(
+          JSON.stringify({
+            type: "cursorPosition",
+            user: localStorage.getItem("username"),
+            document: localStorage.getItem("idDocument"),
+            data: {
+              x: x / pageSize.width,
+              y: y / pageSize.height,
+            },
+          })
+        );
       });
 
       function identify() {
@@ -279,6 +313,56 @@
             console.log(err);
           });
       }
+
+      function manageNewCursorPosition(data) {
+        if (document.getElementById("cursor_" + data.user) == null) {
+          let cursor = document.createElement("div");
+          cursor.classList.add("cursor");
+          cursor.id = "cursor_" + data.user;
+          let p = document.createElement("p");
+          p.innerHTML = data.user;
+          cursor.appendChild(p);
+          document.querySelector(".users_cursors").appendChild(cursor);
+          cursor.style.backgroundColor =
+            user_colors[
+              Math.floor(Math.random() * (user_colors.length - 1 - 0 + 1)) + 0
+            ];
+          p.style.color = cursor.style.backgroundColor;
+        }
+        const cursor = document.getElementById("cursor_" + data.user);
+        cursor.style.left = data.data.x * 100 + "%";
+        cursor.style.top = data.data.y * 100 + "%";
+      }
+
+      const socket = new WebSocket("ws://localhost:3001");
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.user == localStorage.getItem("username")) return;
+        if (data.document != localStorage.getItem("idDocument")) return;
+        if (data.type == "cursorPosition") {
+          manageNewCursorPosition(data);
+        } else if (data.type == "updateDocument") {
+          document_content_element.innerHTML = data.content;
+        } else if (data.type == "cursor") {
+          console.log(data);
+        }
+        if (data.type != "cursorPosition") {
+          console.log(data);
+        }
+      };
+
+      document_content_element.addEventListener("input", () => {
+        updateContent();
+      });
+
+      Array.from(document.querySelectorAll("[contenteditable]")).forEach(
+        function (element, index, array) {
+          element.addEventListener("input", function (event) {
+            updateContent();
+          });
+        }
+      );
 
       window.onload = () => {
         document_content_element.focus();
