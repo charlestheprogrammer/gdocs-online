@@ -2,7 +2,7 @@ require("dotenv").config();
 
 const cors = require("cors");
 const { WebSocketServer } = require("ws");
-const { parseMessage } = require("./routes/collaboration");
+const { parseMessage, disconnect } = require("./routes/collaboration");
 
 const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI;
@@ -17,23 +17,38 @@ app.options("*", cors());
 
 var openFileRouter = require("./routes/openFile");
 var saveRouter = require("./routes/save");
+var imageRouter = require("./routes/images");
 
 const wss = new WebSocketServer({ port: 3001 });
 
+wss.getUniqueID = function () {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + "-" + s4();
+};
+
 const clients = [];
 
+const identifiedUsers = {};
+
 wss.on("connection", function connection(ws) {
+  ws.id = wss.getUniqueID();
   clients.push(ws);
+  console.log(ws.id);
   console.log(clients.length + " clients connectés");
   ws.on("error", console.error);
 
   ws.on("close", function close() {
+    disconnect(ws, identifiedUsers);
     clients.splice(clients.indexOf(ws), 1);
     console.log(clients.length + " clients connectés");
   });
 
   ws.on("message", function message(data) {
-    parseMessage(ws, data, clients);
+    parseMessage(ws, data, clients, identifiedUsers);
   });
 });
 
@@ -41,6 +56,7 @@ app.use(express.json());
 
 app.use("/openFile", openFileRouter);
 app.use("/save", saveRouter);
+app.use("/images", imageRouter);
 
 async function startServer() {
   // Connexion à la base de données
@@ -193,4 +209,5 @@ process.on("SIGINT", () => {
 module.exports = {
   app,
   wss,
+  identifiedUsers,
 };

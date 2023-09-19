@@ -33,9 +33,11 @@
           </div>
         </div>
       </div>
-      <div>
-        <img src="./assets/csimonmeunier.png" alt="" />
-        <p id="user_name"></p>
+      <div id="connected_users">
+        <div>
+          <img src="./assets/csimonmeunier.png" alt="" />
+          <p id="user_name"></p>
+        </div>
       </div>
     </header>
     <div class="toolbar">
@@ -83,6 +85,26 @@
       <button id="subscript" class="option-button script">
         <i class="fa-solid fa-subscript"></i>
       </button>
+      <button id="justifyLeft" class="option-button format">
+        <i class="fa-solid fa-align-left"></i>
+      </button>
+      <button id="justifyCenter" class="option-button format">
+        <i class="fa-solid fa-align-center"></i>
+      </button>
+      <button id="justifyRight" class="option-button format">
+        <i class="fa-solid fa-align-right"></i>
+      </button>
+      <input
+        type="file"
+        name="import_image"
+        id="import_image"
+        class="option-button"
+      />
+      <div class="input-wrapper">
+        <label for="import_image">
+          <i class="fa-solid fa-image"></i>
+        </label>
+      </div>
     </div>
     <div class="page_holder">
       <div class="page" id="page_holder">
@@ -93,6 +115,7 @@
           tabindex="0"
         ></div>
         <div class="users_cursors"></div>
+        <div id="selection-preview"></div>
       </div>
     </div>
 
@@ -132,6 +155,7 @@
       let colorsOptionButton = document.querySelectorAll(
         ".colors-option-button"
       );
+      const imageInput = document.getElementById("import_image");
 
       let saveButton = document.getElementById("save");
       let openButton = document.getElementById("open");
@@ -150,6 +174,43 @@
         fontSizeRef.appendChild(option);
       }
 
+      imageInput.addEventListener("change", () => {
+        const file = imageInput.files[0];
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+          const resizeableImage = document.createElement("div");
+          resizeableImage.classList.add("resizeable_div");
+          const img = new Image();
+          fetch("http://localhost:3000/images/upload", {
+            method: "POST",
+            body: JSON.stringify({
+              base64Image: reader.result,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((res) => {
+              res.json().then((body) => {
+                setTimeout(() => {
+                  img.src = body.image;
+                  resizeableImage.appendChild(img);
+                  resizeableImage.contentEditable = false;
+                  document_content_element.appendChild(resizeableImage);
+                  document_content_element.appendChild(
+                    document.createElement("br")
+                  );
+                  updateContent();
+                }, 700);
+              });
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+        });
+        reader.readAsDataURL(file);
+      });
+
       function updateTitle() {
         document.getElementById("document_title").value = document_title;
         document.title = document_title + " - Cheetah Docs";
@@ -160,7 +221,7 @@
         socket.send(
           JSON.stringify({
             type: "updateDocument",
-            user: localStorage.getItem("username"),
+            username: localStorage.getItem("username"),
             document: localStorage.getItem("idDocument"),
             content: document_content_element.innerHTML,
           })
@@ -263,7 +324,7 @@
         socket.send(
           JSON.stringify({
             type: "cursorPosition",
-            user: localStorage.getItem("username"),
+            username: localStorage.getItem("username"),
             document: localStorage.getItem("idDocument"),
             data: {
               x: x / pageSize.width,
@@ -305,8 +366,24 @@
             res.json().then((data) => {
               document_title = data.document.title;
               document_content_element.innerHTML = data.content;
+              const origin =
+                localStorage.getItem("idDocument") == document_id
+                  ? null
+                  : localStorage.getItem("idDocument");
               localStorage.setItem("idDocument", document_id);
+              socket.send(
+                JSON.stringify({
+                  type: "joinDocument",
+                  username: localStorage.getItem("username"),
+                  origin: origin,
+                  destination: document_id,
+                })
+              );
               updateTitle();
+              document.querySelector(".users_cursors").innerHTML = "";
+              document.querySelectorAll(".connected_user").forEach((user) => {
+                user.remove();
+              });
             });
           })
           .catch((err) => {
@@ -315,12 +392,12 @@
       }
 
       function manageNewCursorPosition(data) {
-        if (document.getElementById("cursor_" + data.user) == null) {
+        if (document.getElementById("cursor_" + data.username) == null) {
           let cursor = document.createElement("div");
           cursor.classList.add("cursor");
-          cursor.id = "cursor_" + data.user;
+          cursor.id = "cursor_" + data.username;
           let p = document.createElement("p");
-          p.innerHTML = data.user;
+          p.innerHTML = data.username;
           cursor.appendChild(p);
           document.querySelector(".users_cursors").appendChild(cursor);
           cursor.style.backgroundColor =
@@ -329,32 +406,69 @@
             ];
           p.style.color = cursor.style.backgroundColor;
         }
-        const cursor = document.getElementById("cursor_" + data.user);
+        const cursor = document.getElementById("cursor_" + data.username);
         cursor.style.left = data.data.x * 100 + "%";
         cursor.style.top = data.data.y * 100 + "%";
+      }
+
+      const connected_users = document.getElementById("connected_users");
+
+      function userLeave(data) {
+        const cursor = document.getElementById("cursor_" + data.username);
+        const user_info = document.getElementById(
+          "connected_users_" + data.username
+        );
+        if (user_info != null) connected_users.removeChild(user_info);
+        cursor?.remove();
+      }
+
+      function userJoin(data) {
+        const userInfo = document.createElement("div");
+        userInfo.id = "connected_users_" + data.username;
+        userInfo.classList.add("connected_user");
+        const userImage = document.createElement("img");
+        userImage.src = "./assets/csimonmeunier.png";
+        const userName = document.createElement("p");
+        userName.innerHTML = data.username;
+        userInfo.appendChild(userImage);
+        userInfo.appendChild(userName);
+        connected_users.appendChild(userInfo);
       }
 
       const socket = new WebSocket("ws://localhost:3001");
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.user == localStorage.getItem("username")) return;
-        if (data.document != localStorage.getItem("idDocument")) return;
+        if (data.username == localStorage.getItem("username")) return;
+        // if (data.document != localStorage.getItem("idDocument")) return;
         if (data.type == "cursorPosition") {
+          if (data.document != localStorage.getItem("idDocument")) return;
           manageNewCursorPosition(data);
         } else if (data.type == "updateDocument") {
+          if (data.document != localStorage.getItem("idDocument")) return;
           document_content_element.innerHTML = data.content;
-        } else if (data.type == "cursor") {
-          console.log(data);
-        }
-        if (data.type != "cursorPosition") {
-          console.log(data);
+        } else if (data.type == "leaveDocument") {
+          userLeave(data);
+        } else if (data.type == "joinDocument") {
+          if (data.document != localStorage.getItem("idDocument")) return;
+          userJoin(data);
+        } else if (data.type == "usersInDocument") {
+          data.users.forEach((user) => {
+            userJoin({
+              username: user,
+            });
+          });
         }
       };
 
-      document_content_element.addEventListener("input", () => {
-        updateContent();
-      });
+      socket.onopen = () => {
+        socket.send(
+          JSON.stringify({
+            type: "identify",
+            username: localStorage.getItem("username"),
+          })
+        );
+      };
 
       Array.from(document.querySelectorAll("[contenteditable]")).forEach(
         function (element, index, array) {
