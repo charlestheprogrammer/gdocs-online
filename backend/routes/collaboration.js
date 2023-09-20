@@ -26,7 +26,6 @@ function switchDocument(ws, message, identifiedUsers) {
     document: message.destination,
   };
   const usersInDocument = [];
-  console.log("switching document", message);
   Object.keys(identifiedUsers).forEach((username) => {
     if (
       identifiedUsers[username].document === message.origin &&

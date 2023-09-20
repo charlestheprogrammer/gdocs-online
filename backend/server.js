@@ -37,7 +37,6 @@ const identifiedUsers = {};
 wss.on("connection", function connection(ws) {
   ws.id = wss.getUniqueID();
   clients.push(ws);
-  console.log(ws.id);
   console.log(clients.length + " clients connectés");
   ws.on("error", console.error);
 

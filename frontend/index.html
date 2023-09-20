@@ -119,97 +119,12 @@
       </div>
     </div>
 
+    <script src="./scripts/toolbar.js"></script>
+    <script src="./scripts/collaboration.js"></script>
+
     <script>
       let document_title = "Document sans titre";
       let cursor_pos = 0;
-
-      let fontList = [
-        "Arial",
-        "Verdana",
-        "Times New Roman",
-        "Garamond",
-        "Georgia",
-        "Courier New",
-        "cursive",
-      ];
-      const user_colors = [
-        "#ffc8dd",
-        "#d4a373",
-        "#caffbf",
-        "#a0c4ff",
-        "#f08080",
-        "#bee1e6",
-        "#70d6ff",
-        "#ff9770",
-        "#84dcc6",
-        "#ee6055",
-        "#809bce",
-        "#7161ef",
-      ];
-      let document_content = "";
-      let document_content_element = document.getElementById("page-content");
-      let optionsButtons = document.querySelectorAll(".option-button");
-      let fontSizeRef = document.getElementById("fontSize");
-      let advancedOptionButton =
-        document.querySelectorAll(".adv-option-button");
-      let colorsOptionButton = document.querySelectorAll(
-        ".colors-option-button"
-      );
-      const imageInput = document.getElementById("import_image");
-
-      let saveButton = document.getElementById("save");
-      let openButton = document.getElementById("open");
-
-      fontList.map((value) => {
-        let option = document.createElement("option");
-        option.value = value;
-        option.innerHTML = value;
-        fontName.appendChild(option);
-      });
-
-      for (let i = 1; i <= 7; i++) {
-        let option = document.createElement("option");
-        option.value = i;
-        option.innerHTML = i;
-        fontSizeRef.appendChild(option);
-      }
-
-      imageInput.addEventListener("change", () => {
-        const file = imageInput.files[0];
-        const reader = new FileReader();
-        reader.addEventListener("load", () => {
-          const resizeableImage = document.createElement("div");
-          resizeableImage.classList.add("resizeable_div");
-          const img = new Image();
-          fetch("http://localhost:3000/images/upload", {
-            method: "POST",
-            body: JSON.stringify({
-              base64Image: reader.result,
-            }),
-            headers: {
-              "Content-Type": "application/json",
-            },
-          })
-            .then((res) => {
-              res.json().then((body) => {
-                setTimeout(() => {
-                  img.src = body.image;
-                  resizeableImage.appendChild(img);
-                  resizeableImage.contentEditable = false;
-                  document_content_element.appendChild(resizeableImage);
-                  document_content_element.appendChild(
-                    document.createElement("br")
-                  );
-                  updateContent();
-                }, 700);
-              });
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        });
-        reader.readAsDataURL(file);
-      });
 
       function updateTitle() {
         document.getElementById("document_title").value = document_title;
@@ -228,111 +143,14 @@
         );
       }
 
-      const modifyText = (command, defaultUi, value) => {
-        document.execCommand(command, defaultUi, value);
-      };
-
       function setTitle() {
         console.log(window.getSelection().type);
       }
-
-      optionsButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          modifyText(button.id, false, null);
-        });
-      });
-
-      advancedOptionButton.forEach((button) => {
-        button.addEventListener("change", () => {
-          modifyText(button.id, false, button.value);
-        });
-      });
-
-      colorsOptionButton.forEach((button) => {
-        button.addEventListener("input", () => {
-          modifyText(button.id, false, button.value);
-        });
-      });
-
-      saveButton.addEventListener("click", async () => {
-        const responseAsync = fetch("http://localhost:3000/save", {
-          body: JSON.stringify({
-            id: localStorage.getItem("idDocument"),
-            title: document_title,
-            content: document_content_element.innerHTML,
-          }),
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-        document.getElementById("temp_info").innerHTML = "Enregistrement...";
-        const response = await responseAsync;
-        const body = await response.json();
-        localStorage.setItem("idDocument", body.document._id);
-        setTimeout(() => {
-          document.getElementById("temp_info").innerHTML = "Enregistré !";
-        }, 600);
-        setTimeout(() => {
-          document.getElementById("temp_info").innerHTML = "";
-        }, 2000);
-      });
 
       function closeOpenModal() {
         let openModal = document.querySelector(".openModal");
         openModal.style.display = "none";
       }
-
-      openButton.addEventListener("click", () => {
-        fetch("http://localhost:3000/api/documents")
-          .then((res) => {
-            res.json().then((body) => {
-              let openModal = document.querySelector(".openModal");
-              openModal.style.display = "flex";
-              let availableFiles = document.getElementById("availableFiles");
-              availableFiles.innerHTML = "";
-              body.forEach((doc) => {
-                let li = document.createElement("li");
-                li.innerHTML = doc.title;
-                li.addEventListener("click", () => {
-                  openFile(doc._id);
-                  let openModal = document.querySelector(".openModal");
-                  openModal.style.display = "none";
-                });
-                availableFiles.appendChild(li);
-              });
-            });
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      });
-
-      const page_holder = document.getElementById("page_holder");
-
-      page_holder.addEventListener("mousemove", function (event) {
-        const pageSize = {
-          width: page_holder.offsetWidth,
-          height: page_holder.offsetHeight,
-        };
-        var rect = page_holder.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
-
-        cursor_pos = {
-          x: x / pageSize.width,
-          y: y / pageSize.height,
-        };
-        socket.send(
-          JSON.stringify({
-            type: "cursorPosition",
-            username: localStorage.getItem("username"),
-            document: localStorage.getItem("idDocument"),
-            data: {
-              x: x / pageSize.width,
-              y: y / pageSize.height,
-            },
-          })
-        );
-      });
 
       function identify() {
         let username = document.getElementById("username").value;
@@ -359,116 +177,6 @@
             });
         }
       }
-
-      function openFile(document_id) {
-        fetch("http://localhost:3000/openFile/" + document_id)
-          .then((res) => {
-            res.json().then((data) => {
-              document_title = data.document.title;
-              document_content_element.innerHTML = data.content;
-              const origin =
-                localStorage.getItem("idDocument") == document_id
-                  ? null
-                  : localStorage.getItem("idDocument");
-              localStorage.setItem("idDocument", document_id);
-              socket.send(
-                JSON.stringify({
-                  type: "joinDocument",
-                  username: localStorage.getItem("username"),
-                  origin: origin,
-                  destination: document_id,
-                })
-              );
-              updateTitle();
-              document.querySelector(".users_cursors").innerHTML = "";
-              document.querySelectorAll(".connected_user").forEach((user) => {
-                user.remove();
-              });
-            });
-          })
-          .catch((err) => {
-            console.log(err);
-          });
-      }
-
-      function manageNewCursorPosition(data) {
-        if (document.getElementById("cursor_" + data.username) == null) {
-          let cursor = document.createElement("div");
-          cursor.classList.add("cursor");
-          cursor.id = "cursor_" + data.username;
-          let p = document.createElement("p");
-          p.innerHTML = data.username;
-          cursor.appendChild(p);
-          document.querySelector(".users_cursors").appendChild(cursor);
-          cursor.style.backgroundColor =
-            user_colors[
-              Math.floor(Math.random() * (user_colors.length - 1 - 0 + 1)) + 0
-            ];
-          p.style.color = cursor.style.backgroundColor;
-        }
-        const cursor = document.getElementById("cursor_" + data.username);
-        cursor.style.left = data.data.x * 100 + "%";
-        cursor.style.top = data.data.y * 100 + "%";
-      }
-
-      const connected_users = document.getElementById("connected_users");
-
-      function userLeave(data) {
-        const cursor = document.getElementById("cursor_" + data.username);
-        const user_info = document.getElementById(
-          "connected_users_" + data.username
-        );
-        if (user_info != null) connected_users.removeChild(user_info);
-        cursor?.remove();
-      }
-
-      function userJoin(data) {
-        const userInfo = document.createElement("div");
-        userInfo.id = "connected_users_" + data.username;
-        userInfo.classList.add("connected_user");
-        const userImage = document.createElement("img");
-        userImage.src = "./assets/csimonmeunier.png";
-        const userName = document.createElement("p");
-        userName.innerHTML = data.username;
-        userInfo.appendChild(userImage);
-        userInfo.appendChild(userName);
-        connected_users.appendChild(userInfo);
-      }
-
-      const socket = new WebSocket("ws://localhost:3001");
-
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.username == localStorage.getItem("username")) return;
-        // if (data.document != localStorage.getItem("idDocument")) return;
-        if (data.type == "cursorPosition") {
-          if (data.document != localStorage.getItem("idDocument")) return;
-          manageNewCursorPosition(data);
-        } else if (data.type == "updateDocument") {
-          if (data.document != localStorage.getItem("idDocument")) return;
-          document_content_element.innerHTML = data.content;
-        } else if (data.type == "leaveDocument") {
-          userLeave(data);
-        } else if (data.type == "joinDocument") {
-          if (data.document != localStorage.getItem("idDocument")) return;
-          userJoin(data);
-        } else if (data.type == "usersInDocument") {
-          data.users.forEach((user) => {
-            userJoin({
-              username: user,
-            });
-          });
-        }
-      };
-
-      socket.onopen = () => {
-        socket.send(
-          JSON.stringify({
-            type: "identify",
-            username: localStorage.getItem("username"),
-          })
-        );
-      };
 
       Array.from(document.querySelectorAll("[contenteditable]")).forEach(
         function (element, index, array) {
