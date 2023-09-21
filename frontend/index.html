@@ -161,9 +161,9 @@
       }).then((res) => {
         let modal = document.querySelector(".modal");
         modal.style.display = "none";
-        localStorage.setItem("profile", profile);
+        localStorage.setItem("username", profile.getName());
         document.getElementById("user_name").innerHTML =
-          localStorage.getItem("profile").getName();
+          localStorage.getItem("username");
       })
         .catch((err) => {
           console.log(err);
