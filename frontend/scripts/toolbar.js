@@ -31,6 +31,7 @@ const imageInput = document.getElementById("import_image");
 
 let saveButton = document.getElementById("save");
 let openButton = document.getElementById("open");
+let newButton = document.getElementById("new");
 
 const modifyText = (command, defaultUi, value) => {
   document.execCommand(command, defaultUi, value);
@@ -180,3 +181,19 @@ function openFile(document_id) {
       console.log(err);
     });
 }
+
+newButton.addEventListener("click", () => {
+  document_title = "Nouveau document";
+  document_content_element.innerHTML = "";
+  localStorage.removeItem("idDocument");
+  updateTitle();
+  document.querySelector(".users_cursors").innerHTML = "";
+  document.querySelectorAll(".connected_user").forEach((user) => {
+    user.remove();
+  });
+});
+
+document.getElementById("document_title").addEventListener("input", () => {
+  document_title = document.getElementById("document_title").value;
+  document.title = document_title + " - Cheetah Docs";
+});

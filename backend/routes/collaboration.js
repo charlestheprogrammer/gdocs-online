@@ -87,6 +87,9 @@ function parseMessage(ws, message, clients, identifiedUsers) {
     case "joinDocument":
       switchDocument(ws, messageObject, identifiedUsers);
       break;
+    case "leaveDocument":
+      disconnect(ws, identifiedUsers);
+      break;
     case "identify":
       ws.username = messageObject.username;
       identifiedUsers[messageObject.username] = {

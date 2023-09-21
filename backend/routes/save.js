@@ -21,6 +21,10 @@ router.post("/", async function (req, res) {
     });
   } else {
     var document = await DocumentSchema.findById(req.body.id).exec();
+    if (document.title !== req.body.title) {
+      document.title = req.body.title;
+      await document.save();
+    }
     var newSave = new SaveSchema({
       content: req.body.content,
       document: document,
