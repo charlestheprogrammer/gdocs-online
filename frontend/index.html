@@ -105,11 +105,23 @@
       </label>
     </div>
   </div>
-  <div class="page_holder">
-    <div class="page" id="page_holder">
-      <div name="" id="page-content" contenteditable="true" tabindex="0"></div>
-      <div class="users_cursors"></div>
-      <div id="selection-preview"></div>
+  <div class="container">
+    <div class="page_holder">
+      <div class="page" id="page_holder">
+        <div
+          name=""
+          id="page-content"
+          contenteditable="true"
+          tabindex="0"
+        ></div>
+        <div class="users_cursors"></div>
+        <div id="selection-preview"></div>
+      </div>
+    </div>
+    <div class="change_history">
+      <h2>Change Log</h2>
+      <ul id="change-list">
+      </ul>
     </div>
   </div>
 
@@ -206,6 +218,69 @@
         });
       }
     );
+
+    function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+        const changeList = document.getElementById("change-list"); 
+        const entry = document.createElement("li");
+        entry.classList.add("change_entry");
+        entry.innerHTML = `<p><strong>${user}</strong> made a change at ${timestamp}:</p><p>${changeDescription}</p>`;
+        changeList.prepend(entry);
+        saveContentToDatabase(user, isotimestamp, pageContent);
+      }
+
+      async function saveContentToDatabase(user, timestamp,content) {
+        try {
+          const response = await fetch('http://localhost:3000/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              documentId: localStorage.getItem('idDocument'),
+              content,
+              user_name: user,
+              timestamp: timestamp,
+            }),
+          });
+
+          if (response.ok) {
+            console.log('Content saved to the database');
+          } else {
+            console.error('Failed to save content to the database');
+          }
+        } catch (error) {
+          console.error('Error saving content to the database:', error);
+        }
+      }
+
+      let typingTimer;
+
+      // Function to save the document when the user stops typing
+      function saveDocumentOnTyping() {
+        // Clear the previous timer (if any)
+        clearTimeout(typingTimer);
+
+        // Start a new timer to save the document after 2 seconds of inactivity
+        typingTimer = setTimeout(() => {
+          const user_name = localStorage.getItem("username");
+          const currentContent = localStorage.getItem("currentContent");
+          const pageContent = document.getElementById("page-content").innerHTML;
+
+          if (pageContent !== currentContent) {
+            addToChangeHistory(
+              user_name,
+              new Date().toLocaleString(),
+              new Date().toISOString(),
+              'Updated content',
+              pageContent
+            );
+            localStorage.setItem('currentContent', pageContent);
+          }
+        }, 2000);
+      }
+
+      // Attach an event listener to the editable div for text input
+      document.getElementById('page-content').addEventListener('input', saveDocumentOnTyping);
 
     window.onload = () => {
       document_content_element.focus();
