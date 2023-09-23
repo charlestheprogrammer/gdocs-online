@@ -7,14 +7,17 @@
   <title></title>
   <link rel="stylesheet" href="./index.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
-  <script src="https://apis.google.com/js/platform.js" async defer></script>
-  <meta name="google-signin-client_id"
-    content="636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com">
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/client.js"></script>
+  <div id="g_id_onload" data-client_id="636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com"
+    data-callback="onSignIn">
+  </div>
 </head>
 
 <body>
   <div class="modal">
-    <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    <div class="g_id_signin" data-type="standard"></div>
   </div>
   <div class="openModal" style="display: none" onclick="closeOpenModal()">
     <div class="content">
@@ -39,7 +42,7 @@
     </div>
     <div id="connected_users">
       <div>
-        <img src="./assets/csimonmeunier.png" alt="" />
+        <img id="user_profile_image" src="" alt="" />
         <p id="user_name"></p>
       </div>
     </div>
@@ -146,58 +149,42 @@
       openModal.style.display = "none";
     }
 
-    function onSignIn(googleUser) {
-      const profile = googleUser.getBasicProfile();
-      console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-      console.log('Name: ' + profile.getName());
-      console.log('Image URL: ' + profile.getImageUrl());
-      console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+    function onSignIn(response) {
+      console.log(response);
+      if (response.credential) {
+        gapi.client.request({
+          path: 'https://www.googleapis.com/oauth2/v3/tokeninfo',
+          params: { id_token: response.credential },
+          callback: function (infoResponse) {
+            console.log(infoResponse);
+            var userName = infoResponse.name;
+            var userProfileImage = infoResponse.picture;
 
-      fetch("http://localhost:3000/api/login", {
-        body: JSON.stringify({
-          username: profile.getName(),
-        }),
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }).then((res) => {
-        let modal = document.querySelector(".modal");
-        modal.style.display = "none";
-        localStorage.setItem("username", profile.getName());
-        document.getElementById("user_name").innerHTML =
-          localStorage.getItem("username");
-      })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
-    /*
-        function identify() {
-          let username = document.getElementById("username").value;
-          if (username != "") {
             fetch("http://localhost:3000/api/login", {
               body: JSON.stringify({
-                username: username,
+                username: userName,
+                image_url: userProfileImage
               }),
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
-            })
-              .then((res) => {
-                console.log(res);
-                let modal = document.querySelector(".modal");
-                modal.style.display = "none";
-                localStorage.setItem("username", username);
-                document.getElementById("user_name").innerHTML =
-                  localStorage.getItem("username");
-              })
-              .catch((err) => {
-                console.log(err);
-              });
+            }).then((res) => {
+              let modal = document.querySelector(".modal");
+              modal.style.display = "none";
+              localStorage.setItem("username", userName);
+              localStorage.setItem("user_profile_image", userProfileImage);
+              document.getElementById("user_name").innerHTML = localStorage.getItem("username");
+              document.getElementById("user_profile_image").src = localStorage.getItem("user_profile_image");
+            }).catch((err) => {
+              console.log(err);
+            });
           }
-        }*/
+        });
+      } else {
+        console.error('Erreur lors de la récupération des informations de profil.');
+      }
+    }
 
     Array.from(document.querySelectorAll("[contenteditable]")).forEach(
       function (element, index, array) {

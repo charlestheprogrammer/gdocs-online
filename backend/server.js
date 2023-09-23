@@ -74,6 +74,7 @@ async function startServer() {
     res.set("Access-Control-Allow-Origin", "*");
     try {
       const username = req.body.name;
+      const userimage = req.body.image_url;
       const existingItem = await User.findOne({ name: username }).exec();
 
       if (existingItem) {
@@ -81,6 +82,7 @@ async function startServer() {
       } else {
         const user = new User({
           name: username,
+          image_url: userimage,
         });
         await user.save();
         res.status(201).json({ message: "Vous êtes inscrit" });
