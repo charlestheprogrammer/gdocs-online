@@ -1,6 +1,8 @@
 const page_holder = document.getElementById("page_holder");
+let connected = false;
 
 page_holder.addEventListener("mousemove", function (event) {
+  if (!connected) return;
   const pageSize = {
     width: page_holder.offsetWidth,
     height: page_holder.offsetHeight,
@@ -95,10 +97,16 @@ socket.onmessage = (event) => {
 };
 
 socket.onopen = () => {
+  connected = true;
   socket.send(
     JSON.stringify({
       type: "identify",
       username: localStorage.getItem("username"),
     })
   );
+};
+
+socket.onclose = () => {
+  console.log("Socket closed");
+  connected = false;
 };

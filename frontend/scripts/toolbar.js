@@ -28,6 +28,8 @@ let fontSizeRef = document.getElementById("fontSize");
 let advancedOptionButton = document.querySelectorAll(".adv-option-button");
 let colorsOptionButton = document.querySelectorAll(".colors-option-button");
 const imageInput = document.getElementById("import_image");
+const changeHistory = document.getElementById("change_history");
+const toggleHistory = document.getElementById("toggle_history");
 
 let saveButton = document.getElementById("save");
 let openButton = document.getElementById("open");
@@ -150,6 +152,10 @@ openButton.addEventListener("click", () => {
       console.log(err);
     });
 });
+
+function toggleHistoryPannel() {
+  changeHistory.classList.toggle("open");
+}
 
 function openFile(document_id) {
   fetch("http://localhost:3000/openFile/" + document_id)
