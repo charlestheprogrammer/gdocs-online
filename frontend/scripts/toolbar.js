@@ -25,6 +25,7 @@ const toggleHistory = document.getElementById("toggle_history");
 
 let saveButton = document.getElementById("save");
 let openButton = document.getElementById("open");
+let showButton = document.getElementById("show");
 let newButton = document.getElementById("new");
 
 const modifyText = (command, defaultUi, value) => {
