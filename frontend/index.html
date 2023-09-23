@@ -15,6 +15,13 @@
       <input type="text" placeholder="Nom d'utilisateur" id="username" />
       <button onclick="identify()">Continuer</button>
     </div>
+    <div class="filesModal" style="display: flex">
+      <button id="new" >Créer un nouveau document</button>
+      <div class="content">
+        <h1>Vos documents</h1>
+          <ul id="homePageFiles"></ul>
+      </div>
+    </div>
     <div class="openModal" style="display: none" onclick="closeOpenModal()">
       <div class="content">
         <h1>Ouvrez un fichier</h1>
@@ -23,7 +30,7 @@
     </div>
     <header>
       <div>
-        <img src="./assets/gdocs.png" alt="" />
+          <img src="./assets/gdocs.png" alt="" onclick="openFilesModal()"/>
         <div>
           <input type="text" id="document_title" class="document_title" />
           <div class="items">
@@ -152,6 +159,11 @@
         openModal.style.display = "none";
       }
 
+      function openFilesModal() {
+        let modal = document.querySelector(".filesModal");
+        modal.style.display = "flex";
+      }
+      
       function identify() {
         let username = document.getElementById("username").value;
         if (username != "") {
