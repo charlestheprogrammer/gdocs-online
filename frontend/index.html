@@ -16,47 +16,47 @@
     />
   </head>
 
-<body>
-  <div class="modal">
-    <div class="g-signin2" data-onsuccess="onSignIn"></div>
-  </div>
-  <div class="openModal" style="display: none" onclick="closeOpenModal()">
-    <div class="content">
-      <h1>Ouvrez un fichier</h1>
-      <ul id="availableFiles"></ul>
+  <body>
+    <div class="modal">
+      <div class="g-signin2" data-onsuccess="onSignIn"></div>
     </div>
-  </div>
-  <header>
-    <div>
-      <img src="./assets/gdocs.png" alt="" />
+    <div class="openModal" style="display: none" onclick="closeOpenModal()">
+      <div class="content">
+        <h1>Ouvrez un fichier</h1>
+        <ul id="availableFiles"></ul>
+      </div>
+    </div>
+    <header>
       <div>
+        <img src="./assets/gdocs.png" alt="" />
         <div>
-          <input type="text" id="document_title" class="document_title" />
-          <div class="items">
-            <button id="new">Nouveau</button>
-            <button id="save">Enregistrer</button>
-            <button id="open">Ouvrir</button>
-            <p id="temp_info"></p>
+          <div>
+            <input type="text" id="document_title" class="document_title" />
+            <div class="items">
+              <button id="new">Nouveau</button>
+              <button id="save">Enregistrer</button>
+              <button id="open">Ouvrir</button>
+              <p id="temp_info"></p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div id="connected_users">
-      <div>
-        <img src="./assets/csimonmeunier.png" alt="" />
-        <p id="user_name"></p>
+      <div id="connected_users">
+        <div>
+          <img src="./assets/csimonmeunier.png" alt="" />
+          <p id="user_name"></p>
+        </div>
       </div>
-    </div>
-  </header>
-  <div class="toolbar">
-    <select id="formatBlock" class="adv-option-button">
-      <option value="H1">H1</option>
-      <option value="H2">H2</option>
-      <option value="H3">H3</option>
-      <option value="H4">H4</option>
-      <option value="H5">H5</option>
-      <option value="H6">H6</option>
-    </select>
+    </header>
+    <div class="toolbar">
+      <select id="formatBlock" class="adv-option-button">
+        <option value="H1">H1</option>
+        <option value="H2">H2</option>
+        <option value="H3">H3</option>
+        <option value="H4">H4</option>
+        <option value="H5">H5</option>
+        <option value="H6">H6</option>
+      </select>
 
       <!-- Font -->
       <select id="fontName" class="adv-option-button"></select>
