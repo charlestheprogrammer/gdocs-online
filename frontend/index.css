@@ -75,6 +75,7 @@ body {
 header {
     display: flex;
     justify-content: space-between;
+    margin-top: 15px;
 }
 
 header>div:last-of-type {
@@ -273,7 +274,6 @@ header>div:last-of-type img:hover+p {
     overflow: auto;
     flex-grow: 1;
     padding: 0 1rem;
-    position: relative;
 }
 
 .page_holder .users_cursors {
@@ -362,4 +362,101 @@ header>div:last-of-type img:hover+p {
     height: 100%;
     display: block;
     object-fit: cover;
+}
+
+.container {
+    flex-grow: 1;
+    padding: 0 1rem;
+    position: relative;
+}
+
+.change_history {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 25%;
+    width: 280px;
+    max-width: 90vw;
+    height: 100%;
+    background-color: #fff;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.2s ease-in-out;
+}
+
+.change_history h2 {
+    margin: 0;
+    padding: 0;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #343434;
+    padding-left: 1rem;
+    padding-top: .5rem;
+    letter-spacing: 0.3px;
+    margin-bottom: 10px;
+}
+
+.change_history_close {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background-color: #cecece;
+    cursor: e-resize;
+}
+
+.change_history.open {
+    transform: translateX(0);
+}
+
+.change_entry {
+    padding: 15px 0px;
+    padding-left: 1rem;
+    border-top: 1px solid #cecece;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    background-color: #fff;
+}
+
+.change_entry:hover {
+    background-color: #f2f2f2;
+}
+
+.change_entry:last-child {
+    border-bottom: 1px solid #cecece;
+}
+
+.change_entry p:first-child {
+    margin: 0;
+    padding: 0;
+    font-size: .9rem;
+    font-weight: 500;
+    color: #000000;
+    letter-spacing: 0.3px;
+}
+
+.change_entry p:not(:first-child) {
+    margin: 0;
+    padding: 0;
+    font-size: .85rem;
+    margin-top: 3px;
+    font-weight: 400;
+    color: #2a2a2a;
+    letter-spacing: 0.3px;
+}
+
+.change_entry p:not(:first-child)::before {
+    content: "";
+    background-color: rgb(62, 172, 62);
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    transform: translateY(-1px);
 }
