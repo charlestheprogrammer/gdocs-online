@@ -28,8 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
           documentList.appendChild(documentBlock);
           documentBlock.addEventListener("click", () => {
             openFile(doc._id);
-            let filesModal = document.querySelector(".filesModal");
-            filesModal.style.display = "none";
+            window.location.href = "./document";
           });
           homePageFiles.appendChild(documentList);
         });
