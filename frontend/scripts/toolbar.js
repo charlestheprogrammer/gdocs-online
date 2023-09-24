@@ -31,7 +31,6 @@ const imageInput = document.getElementById("import_image");
 
 let saveButton = document.getElementById("save");
 let openButton = document.getElementById("open");
-let showButton = document.getElementById("show");
 let newButton = document.getElementById("new");
 
 const modifyText = (command, defaultUi, value) => {
@@ -154,6 +153,7 @@ openButton.addEventListener("click", () => {
 });
 
 newButton.addEventListener("click", () => {
+  console.log("test")
   document_title = "Nouveau document";
   document_content_element.innerHTML = "";
   localStorage.removeItem("idDocument");
