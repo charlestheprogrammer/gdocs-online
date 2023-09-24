@@ -202,26 +202,29 @@
           if (username != "") {
             fetch("http://localhost:3000/api/login", {
               body: JSON.stringify({
-                username: username,
+                username: userName,
+                image_url: userProfileImage
               }),
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
-            })
-              .then((res) => {
-                console.log(res);
-                let modal = document.querySelector(".modal");
-                modal.style.display = "none";
-                localStorage.setItem("username", username);
-                document.getElementById("user_name").innerHTML =
-                  localStorage.getItem("username");
-              })
-              .catch((err) => {
-                console.log(err);
-              });
+            }).then((res) => {
+              let modal = document.querySelector(".modal");
+              modal.style.display = "none";
+              localStorage.setItem("username", userName);
+              localStorage.setItem("user_profile_image", userProfileImage);
+              document.getElementById("user_name").innerHTML = localStorage.getItem("username");
+              document.getElementById("user_profile_image").src = localStorage.getItem("user_profile_image");
+            }).catch((err) => {
+              console.log(err);
+            });
           }
-        }*/
+        });
+      } else {
+        console.error('Erreur lors de la récupération des informations de profil.');
+      }
+    }
 
       Array.from(document.querySelectorAll("[contenteditable]")).forEach(
         function (element, index, array) {
