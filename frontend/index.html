@@ -224,7 +224,7 @@
       } else {
         console.error('Erreur lors de la récupération des informations de profil.');
       }
-    }
+    }*/
 
       Array.from(document.querySelectorAll("[contenteditable]")).forEach(
         function (element, index, array) {
@@ -244,8 +244,10 @@
         const changeList = document.getElementById("change-list");
         const entry = document.createElement("div");
         entry.classList.add("change_entry");
-        
-        entry.innerHTML = `<p>${timestamp.toLocaleString("fr-FR")}</p><p>${user}</p>`;
+
+        entry.innerHTML = `<p>${timestamp.toLocaleString(
+          "fr-FR"
+        )}</p><p>${user}</p>`;
         changeList.prepend(entry);
         saveContentToDatabase(user, isotimestamp, pageContent);
       }
@@ -287,7 +289,12 @@
           const user_name = localStorage.getItem("username");
           const currentContent = localStorage.getItem("currentContent");
           const pageContent = document.getElementById("page-content").innerHTML;
-          const options = { month: 'long', day: 'numeric', hour: 'numeric', minute:'numeric' };
+          const options = {
+            month: "long",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+          };
 
           if (pageContent !== currentContent) {
             addToChangeHistory(
