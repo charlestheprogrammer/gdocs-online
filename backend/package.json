@@ -1,12 +1,12 @@
 {
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.414.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "mongoose": "^7.5.1",
-    "socket.io": "^4.7.2",
-    "uuid": "^9.0.1",
-    "ws": "^8.14.1"
-  }
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.414.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "mongoose": "^7.5.1",
+        "socket.io": "^4.7.2",
+        "uuid": "^9.0.1",
+        "ws": "^8.14.1"
+    }
 }

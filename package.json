@@ -1,0 +1,11 @@
+{
+    "name": "nlpf-cheetahmg",
+    "version": "1.0.0",
+    "scripts": {
+        "format": "prettier --write ./",
+        "prettier:check:ci": "prettier --check ./"
+    },
+    "dependencies": {
+        "prettier": "^3.0.3"
+    }
+}
