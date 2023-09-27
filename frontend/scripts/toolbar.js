@@ -188,15 +188,24 @@ function openFile(document_id) {
     });
 }
 
-newButton.addEventListener("click", () => {
+newButton.addEventListener("click", async () => {
   document_title = "Nouveau document";
   document_content_element.innerHTML = "";
-  localStorage.removeItem("idDocument");
+  const origin = localStorage.getItem("idDocument");
   updateTitle();
   document.querySelector(".users_cursors").innerHTML = "";
   document.querySelectorAll(".connected_user").forEach((user) => {
     user.remove();
   });
+  await saveButton.click();
+  socket.send(
+    JSON.stringify({
+      type: "joinDocument",
+      username: localStorage.getItem("username"),
+      origin: origin,
+      destination: localStorage.getItem("idDocument"),
+    })
+  );
 });
 
 document.getElementById("document_title").addEventListener("input", () => {
