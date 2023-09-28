@@ -1,41 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title></title>
-    <link rel="stylesheet" href="./homePage.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
-    />
-  </head>
-  <body>
-    <div class="filesModal" style="display: flex">
-      <button id="new" onclick="newDocument()">Créer un nouveau document</button>
-      <div class="content">
-        <h1>Vos documents</h1>
-          <ul id="homePageFiles" class="document-list"></ul>
-      </div>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title></title>
+        <link rel="stylesheet" href="./homePage.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    </head>
+    <body>
+        <div class="filesModal">
+            <div class="create">
+                <h1>Créer un nouveau document</h1>
+                <div class="buttons">
+                    <div>
+                        <button id="new" onclick="newDocument()">
+                            <img
+                                src="https://ssl.gstatic.com/docs/templates/thumbnails/docs-blank-googlecolors.png"
+                                alt=""
+                            />
+                        </button>
+                        <p>Vide</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <h1>Documents récents</h1>
+                <div id="homePageFiles" class="document-list"></div>
+            </div>
+        </div>
 
-    <script src="./scripts/homePage.js"></script>
-    <script src="./scripts/toolbar.js"></script>
-    <script>
-      function newDocument() {
-        window.location.href = "./document";
-        localStorage.removeItem("idDocument");
-        document_title = "Nouveau document";
-        let filesModal = document.querySelector(".filesModal");
-        filesModal.style.display = "none";
-        updateTitle();
-        document.querySelector(".users_cursors").innerHTML = "";
-        document.querySelectorAll(".connected_user").forEach((user) => {
-          user.remove();
-        });
-      }
-
-    </script>
-  </body>
+        <script src="./scripts/homePage.js"></script>
+        <script src="./scripts/toolbar.js"></script>
+        <script>
+            function newDocument() {
+                window.location.href = "./document";
+                localStorage.removeItem("idDocument");
+                document_title = "Nouveau document";
+                let filesModal = document.querySelector(".filesModal");
+                filesModal.style.display = "none";
+                updateTitle();
+                document.querySelector(".users_cursors").innerHTML = "";
+                document.querySelectorAll(".connected_user").forEach((user) => {
+                    user.remove();
+                });
+            }
+        </script>
+    </body>
 </html>
 

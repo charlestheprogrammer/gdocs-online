@@ -12,6 +12,7 @@ const app = express();
 const db = require("./db");
 const User = require("./schemas/user");
 const Document = require("./schemas/document");
+const SaveSchema = require("./schemas/save");
 
 app.options("*", cors());
 
