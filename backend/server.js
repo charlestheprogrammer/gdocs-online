@@ -128,7 +128,22 @@ async function startServer() {
         res.set("Access-Control-Allow-Origin", "*");
         try {
             const items = await Document.find({});
-            res.status(200).json(items);
+            const documents = [];
+            for (let i = 0; i < items.length; i++) {
+                let saveFound = await SaveSchema.findOne({ document: items[i] }).sort({ date: -1 }).exec();
+                documents.push({
+                    _id: items[i]._id,
+                    title: items[i].title,
+                    lastSave: saveFound.date,
+                    content: saveFound.content,
+                });
+            }
+
+            res.status(200).json(
+                documents.sort((a, b) => {
+                    return new Date(b.lastSave) - new Date(a.lastSave);
+                })
+            );
         } catch (err) {
             console.error("Erreur lors de la recherche dans MongoDB :", err);
             res.status(500).json({ error: "Erreur lors de la recherche dans la base de données" });
