@@ -8,6 +8,10 @@ body {
     flex-direction: column;
 }
 
+* {
+    cursor: url("./assets/paw.svg") 0 0, auto;
+}
+
 .filesModal .create {
     background-color: rgb(241, 243, 244);
     width: calc(100% - 60px);

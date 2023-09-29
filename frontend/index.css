@@ -302,8 +302,8 @@ header > div:last-of-type img:hover + p {
     right: 0;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
-    background-color: #343434;
+    background: url("./assets/paw_small.svg") no-repeat center center;
+    background-color: transparent !important;
 }
 
 .page_holder .users_cursors .cursor p {
