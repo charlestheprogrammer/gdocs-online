@@ -46,7 +46,7 @@ body {
     align-items: center;
 }
 
-.filesModal .create .buttons > div p {
+.filesModal .create .buttons>div p {
     font-size: .9rem;
     font-weight: 500;
     color: #2e2e2e;
@@ -86,11 +86,17 @@ h1 {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
     padding: 0;
-    margin: 0;
+    margin: 0 auto;
     gap: 20px;
+    width: fit-content;
+}
+
+.document-list::after {
+    content: "";
+    flex: auto;
 }
 
 .document-block {
@@ -102,7 +108,10 @@ h1 {
     border: 1px solid #dcdcdc;
     border-radius: 4px;
     background-color: #fff;
-    width: 190px;
+    flex-grow: 1;
+    width: 100%;
+    max-width: 200px;
+    min-width: 150px;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
@@ -116,21 +125,21 @@ h1 {
     border-top: 1px solid #dcdcdc;
 }
 
-.list-item > .image-container {
+.list-item>.image-container {
     aspect-ratio: 5/6;
     overflow: hidden;
     padding: 20px;
     word-break: break-all;
 }
 
-.list-item > .image-container img {
+.list-item>.image-container img {
     width: calc(100% - 40px);
     height: 100%;
     object-fit: cover;
     border-radius: 5px;
 }
 
-.list-item > .image-container {
+.list-item>.image-container {
     font-size: 10% !important;
 }
 
