@@ -98,7 +98,7 @@ colorsOptionButton.forEach((button) => {
     });
 });
 
-saveButton.addEventListener("click", async () => {
+const savButtonFunction = async () => {
     const responseAsync = fetch("http://localhost:3000/save", {
         body: JSON.stringify({
             id: localStorage.getItem("idDocument"),
@@ -118,7 +118,9 @@ saveButton.addEventListener("click", async () => {
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "";
     }, 2000);
-});
+}
+
+saveButton.addEventListener("click", savButtonFunction);
 
 openButton.addEventListener("click", () => {
     fetch("http://localhost:3000/api/documents")
@@ -178,7 +180,7 @@ function openFile(document_id) {
         });
 }
 
-newButton.addEventListener("click", async () => {
+const newDocumentFunction = async () => {
     document_title = "Nouveau document";
     document_content_element.innerHTML = "";
     const origin = localStorage.getItem("idDocument");
@@ -187,7 +189,7 @@ newButton.addEventListener("click", async () => {
     document.querySelectorAll(".connected_user").forEach((user) => {
         user.remove();
     });
-    await saveButton.click();
+    await savButtonFunction();
     socket.send(
         JSON.stringify({
             type: "joinDocument",
@@ -196,7 +198,9 @@ newButton.addEventListener("click", async () => {
             destination: localStorage.getItem("idDocument"),
         })
     );
-});
+};
+
+newButton.addEventListener("click", newDocumentFunction);
 
 document.getElementById("document_title").addEventListener("input", () => {
     document_title = document.getElementById("document_title").value;

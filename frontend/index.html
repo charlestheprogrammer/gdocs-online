@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title></title>
+        <link rel="stylesheet" href="./homePage.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    </head>
+    <body>
+        <div class="filesModal">
+            <div class="create">
+                <h1>Créer un nouveau document</h1>
+                <div class="buttons">
+                    <div>
+                        <button id="new" onclick="newDocument()">
+                            <img
+                                src="https://ssl.gstatic.com/docs/templates/thumbnails/docs-blank-googlecolors.png"
+                                alt=""
+                            />
+                        </button>
+                        <p>Vide</p>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <h1>Documents récents</h1>
+                <div id="homePageFiles" class="document-list"></div>
+            </div>
+        </div>
+
+        <script src="./scripts/homePage.js"></script>
+        <script src="./scripts/toolbar.js"></script>
+        <script>
+            async function newDocument() {
+                localStorage.removeItem("idDocument");
+                const responseAsync = fetch("http://localhost:3000/save", {
+                    body: JSON.stringify({
+                        id: localStorage.getItem("idDocument"),
+                        title: "Nouveau document",
+                        content: "",
+                    }),
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                });
+                const response = await responseAsync;
+                const body = await response.json();
+                localStorage.setItem("idDocument", body.document._id);
+                setTimeout(() => {
+                    window.location.href = "./document";
+                }, 100);
+            }
+        </script>
+    </body>
+</html>
