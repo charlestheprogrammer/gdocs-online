@@ -32,19 +32,24 @@
         <script src="./scripts/homePage.js"></script>
         <script src="./scripts/toolbar.js"></script>
         <script>
-            function newDocument() {
-                window.location.href = "./document";
+            async function newDocument() {
                 localStorage.removeItem("idDocument");
-                document_title = "Nouveau document";
-                let filesModal = document.querySelector(".filesModal");
-                filesModal.style.display = "none";
-                updateTitle();
-                document.querySelector(".users_cursors").innerHTML = "";
-                document.querySelectorAll(".connected_user").forEach((user) => {
-                    user.remove();
+                const responseAsync = fetch("http://localhost:3000/save", {
+                    body: JSON.stringify({
+                        id: localStorage.getItem("idDocument"),
+                        title: "Nouveau document",
+                        content: "",
+                    }),
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                 });
+                const response = await responseAsync;
+                const body = await response.json();
+                localStorage.setItem("idDocument", body.document._id);
+                setTimeout(() => {
+                    window.location.href = "./document";
+                }, 100);
             }
         </script>
     </body>
 </html>
-
