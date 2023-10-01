@@ -8,14 +8,12 @@ const userWantToRead = async (document) => {
         .populate("chain")
         .exec();
     if (!chainOfResponsability) {
-        console.log("No chain of responsability found");
         return null;
     }
     const users = chainOfResponsability.chain;
     const allowedUsers = [];
     for (const userResponsability of users) {
         if (userResponsability.readPermission) {
-            console.log("User " + userResponsability._id + " has read permission");
             const user = await UserSchema.findById(userResponsability.user).exec();
             userResponsability.user = user;
             allowedUsers.push(userResponsability);
@@ -29,16 +27,18 @@ const userWantToWrite = async (document) => {
         .populate("chain")
         .exec();
     if (!chainOfResponsability) {
-        console.log("No chain of responsability found");
         return null;
     }
     const users = chainOfResponsability.chain;
-    for (const user of users) {
-        if (user.writePermission) {
-            console.log("User " + user._id + " has write permission");
-            return user;
+    const allowedUsers = [];
+    for (const userResponsability of users) {
+        if (userResponsability.writePermission) {
+            const user = await UserSchema.findById(userResponsability.user).exec();
+            userResponsability.user = user;
+            allowedUsers.push(userResponsability);
         }
     }
+    return allowedUsers;
 };
 
 module.exports = {

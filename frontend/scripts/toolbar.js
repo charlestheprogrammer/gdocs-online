@@ -159,6 +159,13 @@ function openFile(document_id) {
         },
     })
         .then((res) => {
+            if (!res.ok) {
+                if (res.status === 403) {
+                    document.getElementById("unauthorizedModal").style.display = "flex";
+                    return;
+                }
+                return;
+            }
             res.json().then((data) => {
                 document_title = data.document.title;
                 document_content_element.innerHTML = data.content;
@@ -178,10 +185,11 @@ function openFile(document_id) {
                 document.querySelectorAll(".connected_user").forEach((user) => {
                     user.remove();
                 });
+                document.getElementById("unauthorizedModal").style.display = "none";
             });
         })
         .catch((err) => {
-            console.log(err);
+            document.getElementById("unreachableModal").style.display = "flex";
         });
 }
 

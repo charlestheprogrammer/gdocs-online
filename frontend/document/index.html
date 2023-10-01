@@ -17,10 +17,35 @@
         <div class="modal">
             <div class="g-signin2" data-onsuccess="onSignIn"></div>
         </div>
-        <div class="openModal" style="display: none" onclick="closeOpenModal()">
+        <div class="openModal" style="display: none" onclick="closeOpenModal()" id="openModal">
             <div class="content">
                 <h1>Ouvrez un fichier</h1>
                 <ul id="availableFiles"></ul>
+            </div>
+        </div>
+        <div
+            class="modal"
+            style="display: none"
+            id="unauthorizedModal"
+        >
+            <div class="content">
+                <h1>Vous n'avez pas l'autorisation de voir ce document</h1>
+                <p>
+                    Une demande vient d'être faite à tous les utilisateurs en ligne pour vous donnez le droit d'accès.
+                    Restez connecté ici.
+                </p>
+            </div>
+        </div>
+        <div
+            class="modal"
+            style="display: none"
+            id="unreachableModal"
+        >
+            <div class="content">
+                <h1>Impossible de trouver ce document</h1>
+                <p>
+                    Vérfiez votre connexion à internet et que ce doument existe
+                </p>
             </div>
         </div>
         <header>
@@ -132,7 +157,7 @@
 
             function updateTitle() {
                 document.getElementById("document_title").value = document_title;
-                document.title = document_title + " - Cheetah Docs";
+                document.title = document_title + " - Gogole Dogs";
             }
 
             function updateContent() {
@@ -152,8 +177,7 @@
             }
 
             function closeOpenModal() {
-                let openModal = document.querySelector(".openModal");
-                openModal.style.display = "none";
+                document.getElementById("openModal").style.display = "none";
             }
 
             function onSignIn(googleUser) {

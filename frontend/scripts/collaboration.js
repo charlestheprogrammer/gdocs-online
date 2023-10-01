@@ -91,9 +91,7 @@ socket.onmessage = (event) => {
             });
         });
     } else if (data.type == "requestRead") {
-        if (window.confirm(
-            `Donnez à ${data.user.name} le droit de lire le document ${data.document} ?`
-        )) {
+        if (window.confirm(`Donnez à ${data.user.name} le droit de lire le document ${data.document} ?`)) {
             socket.send(
                 JSON.stringify({
                     type: "acceptRead",
@@ -104,7 +102,20 @@ socket.onmessage = (event) => {
             );
         }
     } else if (data.type == "acceptRead") {
-        openFile(data.document)
+        openFile(data.document);
+    } else if (data.type == "requestWrite") {
+        if (window.confirm(`Donnez à ${data.user.name} le droit d'écrire dans le document ${data.document} ?`)) {
+            socket.send(
+                JSON.stringify({
+                    type: "acceptWrite",
+                    username: data.user.name,
+                    document: data.document,
+                    user: data.user,
+                })
+            );
+        }
+    } else if (data.type == "acceptWrite") {
+        alert("You can write");
     }
 };
 
