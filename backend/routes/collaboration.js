@@ -1,3 +1,7 @@
+const ChainOfResponsabilitySchema = require("../schemas/chainOfResponsability");
+const UserResponsabilitySchema = require("../schemas/userResponsability");
+const UserSchema = require("../schemas/user");
+
 function setCursorPosition(ws, message, identifiedUsers) {
     Object.keys(identifiedUsers).forEach((username) => {
         if (identifiedUsers[username].document === message.document && username !== ws.username) {
@@ -63,6 +67,30 @@ function disconnect(ws, identifiedUsers) {
     delete identifiedUsers[ws.username];
 }
 
+async function acceptRead(ws, message, identifiedUsers) {
+    const user = await UserSchema.findOne({ name: message.username }).exec();
+    const userResponsability = await new UserResponsabilitySchema({
+        user: user._id,
+        document: message.document,
+        readPermission: true,
+        writePermission: false,
+    }).save();
+    ChainOfResponsabilitySchema.updateOne(
+        { document: message.document },
+        {
+            $push: {
+                chain: userResponsability,
+            },
+        }
+    ).exec();
+    identifiedUsers[message.username].socket.send(
+        JSON.stringify({
+            type: "acceptRead",
+            document: message.document,
+        })
+    );
+}
+
 function parseMessage(ws, message, clients, identifiedUsers) {
     const messageObject = JSON.parse(message);
     switch (messageObject.type) {
@@ -83,6 +111,9 @@ function parseMessage(ws, message, clients, identifiedUsers) {
             identifiedUsers[messageObject.username] = {
                 socket: ws,
             };
+            break;
+        case "acceptRead":
+            acceptRead(ws, messageObject, identifiedUsers);
             break;
         default:
             break;

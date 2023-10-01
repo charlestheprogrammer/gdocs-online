@@ -20,6 +20,9 @@ var openFileRouter = require("./routes/openFile");
 var saveRouter = require("./routes/save");
 var updateRouter = require("./routes/update");
 var imageRouter = require("./routes/images");
+var rightsRouter = require("./routes/rights");
+
+const { identifiedUsers } = require("./misc/users");
 
 const wss = new WebSocketServer({ port: 3001 });
 
@@ -33,8 +36,6 @@ wss.getUniqueID = function () {
 };
 
 const clients = [];
-
-const identifiedUsers = {};
 
 wss.on("connection", function connection(ws) {
     ws.id = wss.getUniqueID();
@@ -59,6 +60,7 @@ app.use("/openFile", openFileRouter);
 app.use("/save", saveRouter);
 app.use("/update", updateRouter);
 app.use("/images", imageRouter);
+app.use("/rights", rightsRouter);
 
 async function startServer() {
     // Connexion à la base de données
@@ -216,5 +218,4 @@ process.on("SIGINT", () => {
 module.exports = {
     app,
     wss,
-    identifiedUsers,
 };

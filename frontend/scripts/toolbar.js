@@ -104,6 +104,7 @@ const savButtonFunction = async () => {
             id: localStorage.getItem("idDocument"),
             title: document_title,
             content: document_content_element.innerHTML,
+            username: localStorage.getItem("username"),
         }),
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -118,7 +119,7 @@ const savButtonFunction = async () => {
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "";
     }, 2000);
-}
+};
 
 saveButton.addEventListener("click", savButtonFunction);
 
@@ -152,7 +153,11 @@ function toggleHistoryPannel() {
 }
 
 function openFile(document_id) {
-    fetch("http://localhost:3000/openFile/" + document_id)
+    fetch("http://localhost:3000/openFile/" + document_id, {
+        headers: {
+            username: localStorage.getItem("username"),
+        },
+    })
         .then((res) => {
             res.json().then((data) => {
                 document_title = data.document.title;

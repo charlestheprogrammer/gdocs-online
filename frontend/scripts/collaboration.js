@@ -59,7 +59,7 @@ function userJoin(data) {
     userInfo.id = "connected_users_" + data.username;
     userInfo.classList.add("connected_user");
     const userImage = document.createElement("img");
-    userImage.src = "./assets/csimonmeunier.png";
+    userImage.src = "../assets/csimonmeunier.png";
     const userName = document.createElement("p");
     userName.innerHTML = data.username;
     userInfo.appendChild(userImage);
@@ -90,6 +90,21 @@ socket.onmessage = (event) => {
                 username: user,
             });
         });
+    } else if (data.type == "requestRead") {
+        if (window.confirm(
+            `Donnez à ${data.user.name} le droit de lire le document ${data.document} ?`
+        )) {
+            socket.send(
+                JSON.stringify({
+                    type: "acceptRead",
+                    username: data.user.name,
+                    document: data.document,
+                    user: data.user,
+                })
+            );
+        }
+    } else if (data.type == "acceptRead") {
+        openFile(data.document)
     }
 };
 
