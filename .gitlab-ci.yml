@@ -6,4 +6,4 @@ lint:
   image: node:20.0.0-alpine
   script:
     - cd frontend
-    - npx prettier -c ./frontend/
+    - npx prettier -c ./frontend/**/*.js
