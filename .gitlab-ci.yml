@@ -2,17 +2,17 @@ stages:
   - lint 💄
   - deploy 🚀
 
-# lint:
-#   stage: lint 💄
-#   image: node:20.0.0-alpine
-#   script:
-#     - npx prettier -c ./frontend/**/*.js ./frontend/**/*.html
-#     - npx prettier -c ./backend/**/*.js
+lint:
+  stage: lint 💄
+  image: node:20.0.0-alpine
+  script:
+    - npx prettier -c ./frontend/**/*.js ./frontend/**/*.html
+    - npx prettier -c ./backend/**/*.js
 
 deploy_to_s3:
   stage: deploy 🚀
   image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
-  # rules:
-  #   - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
   script:
     - aws s3 sync frontend/ s3://nlpf-frontend-website --delete
