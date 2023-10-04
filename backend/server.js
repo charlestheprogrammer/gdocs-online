@@ -1,6 +1,8 @@
 require("dotenv").config();
 
+const axios = require("axios");
 const cors = require("cors");
+
 const { WebSocketServer } = require("ws");
 const { parseMessage, disconnect } = require("./routes/collaboration");
 
@@ -62,6 +64,21 @@ app.use("/update", updateRouter);
 app.use("/images", imageRouter);
 app.use("/rights", rightsRouter);
 
+const { OAuth2Client } = require('google-auth-library');
+const oauth2Client = new OAuth2Client();
+
+async function verify(token) {
+    // FIXME : 'Error: Token used too early'
+    const ticket = await oauth2Client.verifyIdToken({
+        idToken: token,
+        audience: "636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com",
+    });
+    const payload = ticket.getPayload();
+    const userid = payload['sub'];
+
+    return userid;
+}
+
 async function startServer() {
     // Connexion à la base de données
     try {
@@ -77,24 +94,33 @@ async function startServer() {
     // POST /api/login : identification d'un utilisateur
     app.post("/api/login", async (req, res) => {
         res.set("Access-Control-Allow-Origin", "*");
-        try {
-            const username = req.body.name;
-            const userimage = req.body.image_url;
-            const existingItem = await User.findOne({ name: username }).exec();
 
-            if (existingItem) {
-                res.status(200).json({ message: "Vous êtes identifié" });
-            } else {
+        const token = req.body.token;
+        const userId = await verify(token).catch((err) => res.status(401).send(err));
+
+        try {
+            const existingItem = await User.findOne({ userId: userId }).exec();
+
+            if (!existingItem) {
+                const response = await axios.get('https://www.googleapis.com/oauth2/v3/tokeninfo', {
+                    params: { id_token: token }
+                })
+
+                const tokenInfo = response.data;
                 const user = new User({
-                    name: username,
-                    image_url: userimage,
+                    userId: userId,
+                    name: tokenInfo.name,
+                    image_url: tokenInfo.picture
                 });
                 await user.save();
-                res.status(201).json({ message: "Vous êtes inscrit" });
+                res.status(201).send(JSON.stringify(user));
             }
-        } catch (err) {
-            console.error("Erreur lors de la gestion de l'utilisateur :", err);
-            res.status(500).json({ error: "Erreur interne survenue lors de l'identification" });
+            else {
+                res.status(200).send(JSON.stringify(user));
+            }
+        } catch (error) {
+            console.error('Erreur lors de la validation du token :', error);
+            res.status(400).send('Erreur lors de la validation du token');
         }
     });
 
