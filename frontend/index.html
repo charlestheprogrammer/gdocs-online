@@ -4,6 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title></title>
+        <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
         <link rel="stylesheet" href="./homePage.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
     </head>
@@ -41,6 +42,10 @@
         <script src="./scripts/homePage.js"></script>
         <script src="./scripts/toolbar.js"></script>
         <script>
+            if (!localStorage.getItem("username")) {
+                window.location.href = "./login/";
+            }
+
             async function newDocument() {
                 localStorage.removeItem("idDocument");
                 const responseAsync = fetch("http://localhost:3000/save", {
