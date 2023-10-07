@@ -144,13 +144,13 @@
             }
 
             function updateContent() {
-                document_content = document_content_element.value;
                 socket.send(
                     JSON.stringify({
                         type: "updateDocument",
                         token: localStorage.getItem("token"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
+                        version: document_version_panel.innerHTML
                     })
                 );
             }
@@ -170,17 +170,34 @@
                 });
             });
 
-            function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+            async function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+
+                const versionId = await saveContentToDatabase(user, isotimestamp, pageContent, changeDescription);
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
                 entry.classList.add("change_entry");
 
-                entry.innerHTML = `<p>${timestamp.toLocaleString("fr-FR")}</p><p>${user}</p>`;
+                entry.innerHTML = `<p>Le ${timestamp}</p><p>${user} : ${changeDescription}</p>`;
                 changeList.prepend(entry);
-                saveContentToDatabase(user, isotimestamp, pageContent);
+                if (versionId !== null)
+                {
+                    entry.dataset.versionId = versionId;
+                    const rollbackButton = document.createElement("button");
+                    rollbackButton.innerText = "Rollback";
+                    rollbackButton.classList.add("rollback-button");
+                    entry.appendChild(rollbackButton);
+                    rollbackButton.addEventListener("click", async () => {
+                    // Show a confirmation dialog before performing the rollback
+                    const confirmation = confirm("Are you sure you want to rollback to this version?");
+                    if (confirmation) {
+                        rollbackToVersion(versionId);
+                    }
+                });
+                }
+                updateContent();
             }
 
-            async function saveContentToDatabase(user, timestamp, content) {
+            async function saveContentToDatabase(user, timestamp, content, description) {
                 try {
                     const response = await fetch("http://macbook-pro-c.local:3000/update", {
                         method: "POST",
@@ -192,16 +209,21 @@
                             documentId: localStorage.getItem("idDocument"),
                             content,
                             timestamp: timestamp,
+                            description: description,
                         }),
                     });
 
                     if (response.ok) {
+                        const responseData = await response.json();
                         console.log("Content saved to the database");
+                        return responseData.versionId;
                     } else {
                         console.error("Failed to save content to the database");
+                        return null;
                     }
                 } catch (error) {
                     console.error("Error saving content to the database:", error);
+                    return null;
                 }
             }
 
@@ -217,25 +239,50 @@
                     const username = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    const options = {
-                        month: "long",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                    };
+                    // Calculate differences between previous and current content
+                    const differences = diff(currentContent, pageContent);
 
+                    // Generate a description of the changes (e.g., added/removed text)
+                    const changeDescription = generateChangeDescription(differences);
                     if (pageContent !== currentContent) {
                         addToChangeHistory(
                             user_name,
                             new Date().toLocaleString("fr-FR", options),
                             new Date().toISOString(),
-                            "Updated content",
+                            changeDescription,
                             pageContent
                         );
                         localStorage.setItem("currentContent", pageContent);
                     }
                 }, 2000);
             }
+
+            function generateChangeDescription(differences) {
+                let description = "";
+
+                for (const [op, text] of differences) {
+                    if (op === 1) {
+                        description += `Added: "${text}" `;
+                    } else if (op === -1) {
+                        description += `Removed: "${text}" `;
+                    }
+                }
+
+                return description;
+            }
+
+            // Create an instance of the diff_match_patch class
+            const dmp = new diff_match_patch();
+
+            function diff(oldText, newText) {
+                // Compute the differences
+                const diffs = dmp.diff_main(oldText, newText);
+                dmp.diff_cleanupSemantic(diffs); // Cleanup the differences for a more meaningful result
+
+                return diffs;
+            }
+
+
 
             // Attach an event listener to the editable div for text input
             document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);
