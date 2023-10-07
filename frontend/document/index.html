@@ -144,7 +144,7 @@
                         username: localStorage.getItem("username"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
-                        version: document_version_panel.innerHTML
+                        version: document_version_panel.innerHTML,
                     })
                 );
             }
@@ -184,30 +184,29 @@
                         console.log(err);
                     });
             }
-        
+
             function identify() {
                 let username = document.getElementById("username").value;
                 if (username != "") {
-                fetch("http://localhost:3000/api/login", {
-                    body: JSON.stringify({
-                    username: username,
-                    }),
-                    method: "POST",
-                    headers: {
-                    "Content-Type": "application/json",
-                    },
-                })
-                    .then((res) => {
-                    console.log(res);
-                    let modal = document.querySelector(".modal");
-                    modal.style.display = "none";
-                    localStorage.setItem("username", username);
-                    document.getElementById("user_name").innerHTML =
-                        localStorage.getItem("username");
+                    fetch("http://localhost:3000/api/login", {
+                        body: JSON.stringify({
+                            username: username,
+                        }),
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
                     })
-                    .catch((err) => {
-                    console.log(err);
-                    });
+                        .then((res) => {
+                            console.log(res);
+                            let modal = document.querySelector(".modal");
+                            modal.style.display = "none";
+                            localStorage.setItem("username", username);
+                            document.getElementById("user_name").innerHTML = localStorage.getItem("username");
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                        });
                 }
             }
 
@@ -218,7 +217,6 @@
             });
 
             async function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
-
                 const versionId = await saveContentToDatabase(user, isotimestamp, pageContent, changeDescription);
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
@@ -226,20 +224,19 @@
 
                 entry.innerHTML = `<p>Le ${timestamp}</p><p>${user} : ${changeDescription}</p>`;
                 changeList.prepend(entry);
-                if (versionId !== null)
-                {
+                if (versionId !== null) {
                     entry.dataset.versionId = versionId;
                     const rollbackButton = document.createElement("button");
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
                     entry.appendChild(rollbackButton);
                     rollbackButton.addEventListener("click", async () => {
-                    // Show a confirmation dialog before performing the rollback
-                    const confirmation = confirm("Are you sure you want to rollback to this version?");
-                    if (confirmation) {
-                        rollbackToVersion(versionId);
-                    }
-                });
+                        // Show a confirmation dialog before performing the rollback
+                        const confirmation = confirm("Are you sure you want to rollback to this version?");
+                        if (confirmation) {
+                            rollbackToVersion(versionId);
+                        }
+                    });
                 }
                 updateContent();
             }
@@ -286,8 +283,7 @@
                     const user_name = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    if (!currentContent)
-                        localStorage.setItem("currentContent", pageContent);    
+                    if (!currentContent) localStorage.setItem("currentContent", pageContent);
                     // Generate a description of the changes (e.g., added/removed text)
                     if (pageContent !== currentContent) {
                         const changeDescription = generateChangeDescription(currentContent, pageContent);
@@ -328,8 +324,6 @@
 
                 return diffs;
             }
-
-
 
             // Attach an event listener to the editable div for text input
             document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);

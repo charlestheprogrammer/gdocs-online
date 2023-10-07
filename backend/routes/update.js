@@ -28,7 +28,7 @@ const updateRouterMiddleware = (wss) => async (req, res, next) => {
         await Document.findByIdAndUpdate(documentId, {
             $push: { versions: savedVersion._id },
         });
-        
+
         res.set("Access-Control-Allow-Origin", "*");
         res.send({
             message: "Document updated and saved as a new version",
@@ -40,6 +40,6 @@ const updateRouterMiddleware = (wss) => async (req, res, next) => {
     }
 };
 
-router.post('/', updateRouterMiddleware);
+router.post("/", updateRouterMiddleware);
 
 module.exports = updateRouterMiddleware;
