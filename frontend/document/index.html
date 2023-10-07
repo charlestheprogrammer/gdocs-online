@@ -1,283 +1,270 @@
 <!doctype html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title></title>
+        <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
+        <link rel="stylesheet" href="../index.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+    </head>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title></title>
-    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
-    <link rel="stylesheet" href="../index.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
-</head>
-
-<body>
-    <div class="openModal" style="display: none" onclick="closeOpenModal()">
-        <div class="content">
-            <h1>Ouvrez un fichier</h1>
-            <ul id="availableFiles"></ul>
-        </div>
-<<<<<<< HEAD
-        <div class="openModal" style="display: none" onclick="closeOpenModal()" id="openModal">
+    <body>
+        <div class="openModal" style="display: none" onclick="closeOpenModal()">
             <div class="content">
                 <h1>Ouvrez un fichier</h1>
                 <ul id="availableFiles"></ul>
             </div>
         </div>
-        <div
-            class="modal"
-            style="display: none"
-            id="unauthorizedModal"
-        >
-            <div class="content">
-                <h1>Vous n'avez pas l'autorisation de voir ce document</h1>
-                <p>
-                    Une demande vient d'être faite à tous les utilisateurs en ligne pour vous donnez le droit d'accès.
-                    Restez connecté ici.
-                </p>
-            </div>
-        </div>
-        <div
-            class="modal"
-            style="display: none"
-            id="unreachableModal"
-        >
-            <div class="content">
-                <h1>Impossible de trouver ce document</h1>
-                <p>
-                    Vérfiez votre connexion à internet et que ce doument existe
-                </p>
-            </div>
-        </div>
         <header>
-=======
-    </div>
-    <header>
-        <div>
-            <img src="../assets/gdocs.png" alt="" onclick="window.location.href='../'" />
->>>>>>> 8c50289 (auth 1.0)
             <div>
+                <img src="../assets/gdocs.png" alt="" onclick="window.location.href='../'" />
                 <div>
-                    <input type="text" id="document_title" class="document_title" />
-                    <div class="items">
-                        <button id="new">Nouveau</button>
-                        <button id="save">Enregistrer</button>
-                        <button id="open">Ouvrir</button>
-                        <p id="temp_info"></p>
+                    <div>
+                        <input type="text" id="document_title" class="document_title" />
+                        <div class="items">
+                            <button id="new">Nouveau</button>
+                            <button id="save">Enregistrer</button>
+                            <button id="open">Ouvrir</button>
+                            <p id="temp_info"></p>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div id="connected_users">
+                <div>
+                    <img src="" alt="" id="user_picture" />
+                    <p id="user_name"></p>
+                </div>
+            </div>
+        </header>
+        <div class="toolbar">
+            <select id="formatBlock" class="adv-option-button">
+                <option value="H1">H1</option>
+                <option value="H2">H2</option>
+                <option value="H3">H3</option>
+                <option value="H4">H4</option>
+                <option value="H5">H5</option>
+                <option value="H6">H6</option>
+            </select>
+
+            <!-- Font -->
+            <select id="fontName" class="adv-option-button"></select>
+            <select id="fontSize" class="adv-option-button"></select>
+
+            <!-- Color -->
+            <div class="input-wrapper">
+                <input type="color" id="foreColor" class="colors-option-button" />
+                <button>
+                    <label for="foreColor"><i class="fa-solid fa-a"></i></label>
+                </button>
+            </div>
+            <div class="input-wrapper">
+                <input type="color" id="backColor" class="colors-option-button" />
+                <button>
+                    <label for="backColor"><i class="fa-solid fa-highlighter"></i></label>
+                </button>
+            </div>
+            <button id="bold" class="option-button format">
+                <i class="fa-solid fa-bold"></i>
+            </button>
+            <button id="italic" class="option-button format">
+                <i class="fa-solid fa-italic"></i>
+            </button>
+            <button id="underline" class="option-button format">
+                <i class="fa-solid fa-underline"></i>
+            </button>
+            <button id="strikethrough" class="option-button format">
+                <i class="fa-solid fa-strikethrough"></i>
+            </button>
+            <button id="superscript" class="option-button script">
+                <i class="fa-solid fa-superscript"></i>
+            </button>
+            <button id="subscript" class="option-button script">
+                <i class="fa-solid fa-subscript"></i>
+            </button>
+            <button id="justifyLeft" class="option-button format">
+                <i class="fa-solid fa-align-left"></i>
+            </button>
+            <button id="justifyCenter" class="option-button format">
+                <i class="fa-solid fa-align-center"></i>
+            </button>
+            <button id="justifyRight" class="option-button format">
+                <i class="fa-solid fa-align-right"></i>
+            </button>
+            <input type="file" name="import_image" id="import_image" class="option-button" />
+            <div class="input-wrapper">
+                <label for="import_image">
+                    <i class="fa-solid fa-image"></i>
+                </label>
+            </div>
+            <button id="toggleHistory" onclick="toggleHistoryPannel()">
+                <i class="fa-solid fa-history"></i>
+            </button>
         </div>
-        <div id="connected_users">
-            <div>
-                <img src="../assets/csimonmeunier.png" alt="" />
-                <p id="user_name"></p>
+        <div class="page_holder">
+            <div class="page" id="page_holder">
+                <div name="" id="page-content" contenteditable="true" tabindex="0"></div>
+                <div class="users_cursors"></div>
+                <div id="selection-preview"></div>
             </div>
         </div>
-    </header>
-    <div class="toolbar">
-        <select id="formatBlock" class="adv-option-button">
-            <option value="H1">H1</option>
-            <option value="H2">H2</option>
-            <option value="H3">H3</option>
-            <option value="H4">H4</option>
-            <option value="H5">H5</option>
-            <option value="H6">H6</option>
-        </select>
 
-        <!-- Font -->
-        <select id="fontName" class="adv-option-button"></select>
-        <select id="fontSize" class="adv-option-button"></select>
-
-        <!-- Color -->
-        <div class="input-wrapper">
-            <input type="color" id="foreColor" class="colors-option-button" />
-            <button>
-                <label for="foreColor"><i class="fa-solid fa-a"></i></label>
-            </button>
+        <div class="change_history" id="change_history">
+            <div class="change_history_close" onclick="toggleHistoryPannel()"></div>
+            <h2>Historique des versions</h2>
+            <div id="change-list"></div>
         </div>
-        <div class="input-wrapper">
-            <input type="color" id="backColor" class="colors-option-button" />
-            <button>
-                <label for="backColor"><i class="fa-solid fa-highlighter"></i></label>
-            </button>
-        </div>
-        <button id="bold" class="option-button format">
-            <i class="fa-solid fa-bold"></i>
-        </button>
-        <button id="italic" class="option-button format">
-            <i class="fa-solid fa-italic"></i>
-        </button>
-        <button id="underline" class="option-button format">
-            <i class="fa-solid fa-underline"></i>
-        </button>
-        <button id="strikethrough" class="option-button format">
-            <i class="fa-solid fa-strikethrough"></i>
-        </button>
-        <button id="superscript" class="option-button script">
-            <i class="fa-solid fa-superscript"></i>
-        </button>
-        <button id="subscript" class="option-button script">
-            <i class="fa-solid fa-subscript"></i>
-        </button>
-        <button id="justifyLeft" class="option-button format">
-            <i class="fa-solid fa-align-left"></i>
-        </button>
-        <button id="justifyCenter" class="option-button format">
-            <i class="fa-solid fa-align-center"></i>
-        </button>
-        <button id="justifyRight" class="option-button format">
-            <i class="fa-solid fa-align-right"></i>
-        </button>
-        <input type="file" name="import_image" id="import_image" class="option-button" />
-        <div class="input-wrapper">
-            <label for="import_image">
-                <i class="fa-solid fa-image"></i>
-            </label>
-        </div>
-        <button id="toggleHistory" onclick="toggleHistoryPannel()">
-            <i class="fa-solid fa-history"></i>
-        </button>
-    </div>
-    <div class="page_holder">
-        <div class="page" id="page_holder">
-            <div name="" id="page-content" contenteditable="true" tabindex="0"></div>
-            <div class="users_cursors"></div>
-            <div id="selection-preview"></div>
-        </div>
-    </div>
 
-    <div class="change_history" id="change_history">
-        <div class="change_history_close" onclick="toggleHistoryPannel()"></div>
-        <h2>Historique des versions</h2>
-        <div id="change-list"></div>
-    </div>
+        <script src="../scripts/toolbar.js"></script>
+        <script src="../scripts/collaboration.js"></script>
 
-    <script src="../scripts/toolbar.js"></script>
-    <script src="../scripts/collaboration.js"></script>
+        <script>
+            if (!localStorage.getItem("username")) {
+                window.location.href = "./login/";
+            }
 
-    <script>
-        if (!localStorage.getItem("username")) {
-            window.location.href = "./login/";
-        }
+            let document_title = "Document sans titre";
+            let cursor_pos = 0;
 
-        let document_title = "Document sans titre";
-        let cursor_pos = 0;
+            function updateTitle() {
+                document.getElementById("document_title").value = document_title;
+                document.title = document_title + " - Cheetah Docs";
+            }
 
-        function updateTitle() {
-            document.getElementById("document_title").value = document_title;
-            document.title = document_title + " - Cheetah Docs";
-        }
+            function updateContent() {
+                document_content = document_content_element.value;
+                socket.send(
+                    JSON.stringify({
+                        type: "updateDocument",
+                        username: localStorage.getItem("username"),
+                        document: localStorage.getItem("idDocument"),
+                        content: document_content_element.innerHTML,
+                    })
+                );
+            }
 
-        function updateContent() {
-            document_content = document_content_element.value;
-            socket.send(
-                JSON.stringify({
-                    type: "updateDocument",
-                    username: localStorage.getItem("username"),
-                    document: localStorage.getItem("idDocument"),
-                    content: document_content_element.innerHTML,
-                })
-            );
-        }
+            function setTitle() {
+                console.log(window.getSelection().type);
+            }
 
-        function setTitle() {
-            console.log(window.getSelection().type);
-        }
+            function closeOpenModal() {
+                let openModal = document.querySelector(".openModal");
+                openModal.style.display = "none";
+            }
 
-        function closeOpenModal() {
-            let openModal = document.querySelector(".openModal");
-            openModal.style.display = "none";
-        }
-
-        Array.from(document.querySelectorAll("[contenteditable]")).forEach(function (element, index, array) {
-            element.addEventListener("input", function (event) {
-                updateContent();
-            });
-        });
-
-        function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
-            const changeList = document.getElementById("change-list");
-            const entry = document.createElement("div");
-            entry.classList.add("change_entry");
-
-            entry.innerHTML = `<p>${timestamp.toLocaleString("fr-FR")}</p><p>${user}</p>`;
-            changeList.prepend(entry);
-            saveContentToDatabase(user, isotimestamp, pageContent);
-        }
-
-        async function saveContentToDatabase(user, timestamp, content) {
-            try {
-                const response = await fetch("http://localhost:3000/update", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        documentId: localStorage.getItem("idDocument"),
-                        content,
-                        user_name: user,
-                        timestamp: timestamp,
-                    }),
+            Array.from(document.querySelectorAll("[contenteditable]")).forEach(function (element, index, array) {
+                element.addEventListener("input", function (event) {
+                    updateContent();
                 });
+            });
 
-                if (response.ok) {
-                    console.log("Content saved to the database");
-                } else {
-                    console.error("Failed to save content to the database");
+            function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+                const changeList = document.getElementById("change-list");
+                const entry = document.createElement("div");
+                entry.classList.add("change_entry");
+
+                entry.innerHTML = `<p>${timestamp.toLocaleString("fr-FR")}</p><p>${user}</p>`;
+                changeList.prepend(entry);
+                saveContentToDatabase(user, isotimestamp, pageContent);
+            }
+
+            async function saveContentToDatabase(user, timestamp, content) {
+                try {
+                    const response = await fetch("http://localhost:3000/update", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            documentId: localStorage.getItem("idDocument"),
+                            content,
+                            user_name: user,
+                            timestamp: timestamp,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        console.log("Content saved to the database");
+                    } else {
+                        console.error("Failed to save content to the database");
+                    }
+                } catch (error) {
+                    console.error("Error saving content to the database:", error);
                 }
-            } catch (error) {
-                console.error("Error saving content to the database:", error);
             }
-        }
 
-        let typingTimer;
+            let typingTimer;
 
-        // Function to save the document when the user stops typing
-        function saveDocumentOnTyping() {
-            // Clear the previous timer (if any)
-            clearTimeout(typingTimer);
+            // Function to save the document when the user stops typing
+            function saveDocumentOnTyping() {
+                // Clear the previous timer (if any)
+                clearTimeout(typingTimer);
 
-            // Start a new timer to save the document after 2 seconds of inactivity
-            typingTimer = setTimeout(() => {
-                const username = localStorage.getItem("username");
-                const currentContent = localStorage.getItem("currentContent");
-                const pageContent = document.getElementById("page-content").innerHTML;
-                const options = {
-                    month: "long",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                };
+                // Start a new timer to save the document after 2 seconds of inactivity
+                typingTimer = setTimeout(() => {
+                    const username = localStorage.getItem("username");
+                    const currentContent = localStorage.getItem("currentContent");
+                    const pageContent = document.getElementById("page-content").innerHTML;
+                    const options = {
+                        month: "long",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                    };
 
-                if (pageContent !== currentContent) {
-                    addToChangeHistory(
-                        user_name,
-                        new Date().toLocaleString("fr-FR", options),
-                        new Date().toISOString(),
-                        "Updated content",
-                        pageContent
-                    );
-                    localStorage.setItem("currentContent", pageContent);
+                    if (pageContent !== currentContent) {
+                        addToChangeHistory(
+                            user_name,
+                            new Date().toLocaleString("fr-FR", options),
+                            new Date().toISOString(),
+                            "Updated content",
+                            pageContent
+                        );
+                        localStorage.setItem("currentContent", pageContent);
+                    }
+                }, 2000);
+            }
+
+            // Attach an event listener to the editable div for text input
+            document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);
+
+            let userInfos = {
+                username: localStorage.getItem("username"),
+                image: localStorage.getItem("image"),
+            };
+
+            document.getElementById("user_name").innerHTML = userInfos.username.split(" ")[0];
+            document.getElementById("user_picture").src = userInfos.image;
+
+            fetch("http://localhost:3000/api/login", {
+                headers: {
+                    Authorization: localStorage.getItem("token"),
+                },
+            }).then((res) => {
+                if (!res.ok) {
+                    window.location.href = "../login/";
+                    return;
                 }
-            }, 2000);
-        }
+                res.json().then((data) => {
+                    userInfos = {
+                        username: data.name,
+                        image: data.image_url,
+                    };
+                    localStorage.setItem("username", userInfos.username);
+                    localStorage.setItem("image", userInfos.image);
+                    document.getElementById("user_name").innerHTML = userInfos.username.split(" ")[0];
+                    document.getElementById("user_picture").src = userInfos.image;
+                });
+            });
 
-        // Attach an event listener to the editable div for text input
-        document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);
-
-        window.onload = () => {
-            document_content_element.focus();
-            if (localStorage.getItem("username") != null) {
-                let modal = document.querySelector(".modal");
-                modal.style.display = "none";
-                document.getElementById("user_name").innerHTML = localStorage.getItem("username");
-            }
-            if (localStorage.getItem("idDocument") != null) {
-                openFile(localStorage.getItem("idDocument"));
-            }
-            updateTitle();
-        };
-    </script>
-</body>
-
+            window.onload = () => {
+                document_content_element.focus();
+                if (localStorage.getItem("idDocument") != null) {
+                    openFile(localStorage.getItem("idDocument"));
+                }
+                updateTitle();
+            };
+        </script>
+    </body>
 </html>

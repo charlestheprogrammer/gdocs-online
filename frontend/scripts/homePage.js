@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         month: "short",
                         day: "numeric",
                     };
-                    lastModified.textContent = `${lastModifiedTime.toLocaleString('fr-FR', options)}`;
+                    lastModified.textContent = `${lastModifiedTime.toLocaleString("fr-FR", options)}`;
 
                     let imageContainer = document.createElement("div");
                     imageContainer.classList.add("image-container");
