@@ -286,12 +286,11 @@
                     const user_name = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    // Calculate differences between previous and current content
-                    const differences = diff(currentContent, pageContent);
-
+                    if (!currentContent)
+                        localStorage.setItem("currentContent", pageContent);    
                     // Generate a description of the changes (e.g., added/removed text)
-                    const changeDescription = generateChangeDescription(differences);
                     if (pageContent !== currentContent) {
+                        const changeDescription = generateChangeDescription(currentContent, pageContent);
                         addToChangeHistory(
                             user_name,
                             new Date().toLocaleString("fr-FR", options),
@@ -304,7 +303,8 @@
                 }, 2000);
             }
 
-            function generateChangeDescription(differences) {
+            function generateChangeDescription(currentContent, pageContent) {
+                const differences = diff(currentContent, pageContent);
                 let description = "";
 
                 for (const [op, text] of differences) {
