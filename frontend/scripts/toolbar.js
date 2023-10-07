@@ -118,7 +118,7 @@ const savButtonFunction = async () => {
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "";
     }, 2000);
-}
+};
 
 saveButton.addEventListener("click", savButtonFunction);
 

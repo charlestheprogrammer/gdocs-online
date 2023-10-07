@@ -5,6 +5,7 @@ const cors = require("cors");
 
 const { WebSocketServer } = require("ws");
 const { parseMessage, disconnect } = require("./routes/collaboration");
+const { verify } = require("./authentification");
 
 const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI;
@@ -62,21 +63,6 @@ app.use("/save", saveRouter);
 app.use("/update", updateRouter);
 app.use("/images", imageRouter);
 
-const { OAuth2Client } = require('google-auth-library');
-const oauth2Client = new OAuth2Client();
-
-async function verify(token) {
-    // FIXME : 'Error: Token used too early'
-    const ticket = await oauth2Client.verifyIdToken({
-        idToken: token,
-        audience: "636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com",
-    });
-    const payload = ticket.getPayload();
-    const userid = payload['sub'];
-
-    return userid;
-}
-
 async function startServer() {
     // Connexion à la base de données
     try {
@@ -90,35 +76,50 @@ async function startServer() {
     // Définition des routes
 
     // POST /api/login : identification d'un utilisateur
-    app.post("/api/login", async (req, res) => {
+    app.get("/api/login", async (req, res) => {
         res.set("Access-Control-Allow-Origin", "*");
 
-        const token = req.body.token;
-        const userId = await verify(token).catch((err) => res.status(401).send(err));
+        const token = req.headers.authorization;
+        if (!token || token === "") {
+            res.status(400).send("Token manquant");
+            return;
+        }
+        let userId = null;
+        try {
+            userId = await verify(token);
+        } catch (error) {
+            res.status(401).send(error);
+            return;
+        }
+
+        if (!userId) {
+            res.status(401).send("Token invalide");
+            return;
+        }
 
         try {
             const existingItem = await User.findOne({ userId: userId }).exec();
 
             if (!existingItem) {
-                const response = await axios.get('https://www.googleapis.com/oauth2/v3/tokeninfo', {
-                    params: { id_token: token }
-                })
+                const response = await axios.get("https://www.googleapis.com/oauth2/v3/tokeninfo", {
+                    params: { id_token: token },
+                });
 
                 const tokenInfo = response.data;
                 const user = new User({
                     userId: userId,
                     name: tokenInfo.name,
-                    image_url: tokenInfo.picture
+                    image_url: tokenInfo.picture,
                 });
                 await user.save();
                 res.status(201).send(JSON.stringify(user));
-            }
-            else {
-                res.status(200).send(JSON.stringify(user));
+                return;
+            } else {
+                res.status(200).send(JSON.stringify(existingItem));
+                return;
             }
         } catch (error) {
-            console.error('Erreur lors de la validation du token :', error);
-            res.status(400).send('Erreur lors de la validation du token');
+            console.error("Erreur lors de la validation du token :", error);
         }
     });
 
