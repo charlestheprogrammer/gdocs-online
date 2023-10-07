@@ -18,7 +18,9 @@ app.options("*", cors());
 
 var openFileRouter = require("./routes/openFile");
 var saveRouter = require("./routes/save");
-var updateRouter = require("./routes/update");
+var updateRouterMiddleware = require("./routes/update");
+var versionsRouter = require('./routes/getDocumentUpdates');
+var singleVersionRouter = require('./routes/getUpdate');
 var imageRouter = require("./routes/images");
 
 const wss = new WebSocketServer({ port: 3001 });
@@ -57,7 +59,9 @@ app.use(express.json());
 
 app.use("/openFile", openFileRouter);
 app.use("/save", saveRouter);
-app.use("/update", updateRouter);
+app.use("/update", updateRouterMiddleware(wss));
+app.use("/getDocumentUpdates",versionsRouter);
+app.use("/getUpdate",singleVersionRouter);
 app.use("/images", imageRouter);
 
 async function startServer() {

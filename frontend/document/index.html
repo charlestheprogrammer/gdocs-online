@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="../index.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
         <script src="https://apis.google.com/js/platform.js" async defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
         <meta
             name="google-signin-client_id"
             content="636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com"
@@ -15,7 +16,8 @@
 
     <body>
         <div class="modal">
-            <div class="g-signin2" data-onsuccess="onSignIn"></div>
+            <input type="text" placeholder="Nom d'utilisateur" id="username" />
+            <button onclick="identify()">Continuer</button>
         </div>
         <div class="openModal" style="display: none" onclick="closeOpenModal()">
             <div class="content">
@@ -136,13 +138,13 @@
             }
 
             function updateContent() {
-                document_content = document_content_element.value;
                 socket.send(
                     JSON.stringify({
                         type: "updateDocument",
                         username: localStorage.getItem("username"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
+                        version: document_version_panel.innerHTML
                     })
                 );
             }
@@ -182,35 +184,32 @@
                         console.log(err);
                     });
             }
-            /*
-        function identify() {
-          let username = document.getElementById("username").value;
-          if (username != "") {
-            fetch("http://localhost:3000/api/login", {
-              body: JSON.stringify({
-                username: userName,
-                image_url: userProfileImage
-              }),
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }).then((res) => {
-              let modal = document.querySelector(".modal");
-              modal.style.display = "none";
-              localStorage.setItem("username", userName);
-              localStorage.setItem("user_profile_image", userProfileImage);
-              document.getElementById("user_name").innerHTML = localStorage.getItem("username");
-              document.getElementById("user_profile_image").src = localStorage.getItem("user_profile_image");
-            }).catch((err) => {
-              console.log(err);
-            });
-          }
-        });
-      } else {
-        console.error('Erreur lors de la récupération des informations de profil.');
-      }
-    }*/
+        
+            function identify() {
+                let username = document.getElementById("username").value;
+                if (username != "") {
+                fetch("http://localhost:3000/api/login", {
+                    body: JSON.stringify({
+                    username: username,
+                    }),
+                    method: "POST",
+                    headers: {
+                    "Content-Type": "application/json",
+                    },
+                })
+                    .then((res) => {
+                    console.log(res);
+                    let modal = document.querySelector(".modal");
+                    modal.style.display = "none";
+                    localStorage.setItem("username", username);
+                    document.getElementById("user_name").innerHTML =
+                        localStorage.getItem("username");
+                    })
+                    .catch((err) => {
+                    console.log(err);
+                    });
+                }
+            }
 
             Array.from(document.querySelectorAll("[contenteditable]")).forEach(function (element, index, array) {
                 element.addEventListener("input", function (event) {
@@ -218,17 +217,34 @@
                 });
             });
 
-            function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+            async function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+
+                const versionId = await saveContentToDatabase(user, isotimestamp, pageContent, changeDescription);
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
                 entry.classList.add("change_entry");
 
-                entry.innerHTML = `<p>${timestamp.toLocaleString("fr-FR")}</p><p>${user}</p>`;
+                entry.innerHTML = `<p>Le ${timestamp}</p><p>${user} : ${changeDescription}</p>`;
                 changeList.prepend(entry);
-                saveContentToDatabase(user, isotimestamp, pageContent);
+                if (versionId !== null)
+                {
+                    entry.dataset.versionId = versionId;
+                    const rollbackButton = document.createElement("button");
+                    rollbackButton.innerText = "Rollback";
+                    rollbackButton.classList.add("rollback-button");
+                    entry.appendChild(rollbackButton);
+                    rollbackButton.addEventListener("click", async () => {
+                    // Show a confirmation dialog before performing the rollback
+                    const confirmation = confirm("Are you sure you want to rollback to this version?");
+                    if (confirmation) {
+                        rollbackToVersion(versionId);
+                    }
+                });
+                }
+                updateContent();
             }
 
-            async function saveContentToDatabase(user, timestamp, content) {
+            async function saveContentToDatabase(user, timestamp, content, description) {
                 try {
                     const response = await fetch("http://localhost:3000/update", {
                         method: "POST",
@@ -240,16 +256,21 @@
                             content,
                             user_name: user,
                             timestamp: timestamp,
+                            description: description,
                         }),
                     });
 
                     if (response.ok) {
+                        const responseData = await response.json();
                         console.log("Content saved to the database");
+                        return responseData.versionId;
                     } else {
                         console.error("Failed to save content to the database");
+                        return null;
                     }
                 } catch (error) {
                     console.error("Error saving content to the database:", error);
+                    return null;
                 }
             }
 
@@ -265,25 +286,50 @@
                     const user_name = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    const options = {
-                        month: "long",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                    };
+                    // Calculate differences between previous and current content
+                    const differences = diff(currentContent, pageContent);
 
+                    // Generate a description of the changes (e.g., added/removed text)
+                    const changeDescription = generateChangeDescription(differences);
                     if (pageContent !== currentContent) {
                         addToChangeHistory(
                             user_name,
                             new Date().toLocaleString("fr-FR", options),
                             new Date().toISOString(),
-                            "Updated content",
+                            changeDescription,
                             pageContent
                         );
                         localStorage.setItem("currentContent", pageContent);
                     }
                 }, 2000);
             }
+
+            function generateChangeDescription(differences) {
+                let description = "";
+
+                for (const [op, text] of differences) {
+                    if (op === 1) {
+                        description += `Added: "${text}" `;
+                    } else if (op === -1) {
+                        description += `Removed: "${text}" `;
+                    }
+                }
+
+                return description;
+            }
+
+            // Create an instance of the diff_match_patch class
+            const dmp = new diff_match_patch();
+
+            function diff(oldText, newText) {
+                // Compute the differences
+                const diffs = dmp.diff_main(oldText, newText);
+                dmp.diff_cleanupSemantic(diffs); // Cleanup the differences for a more meaningful result
+
+                return diffs;
+            }
+
+
 
             // Attach an event listener to the editable div for text input
             document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);

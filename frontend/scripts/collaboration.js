@@ -79,6 +79,8 @@ socket.onmessage = (event) => {
     } else if (data.type == "updateDocument") {
         if (data.document != localStorage.getItem("idDocument")) return;
         document_content_element.innerHTML = data.content;
+        document_version_panel.innerHTML = data.version;
+        attachRollbackListener();
     } else if (data.type == "leaveDocument") {
         userLeave(data);
     } else if (data.type == "joinDocument") {

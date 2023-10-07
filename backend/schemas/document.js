@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 
-const Schema = mongoose.Schema;
-
-const DocumentSchema = new Schema({
-    title: String,
+const documentSchema = new mongoose.Schema({
+  title: String,
+  versions: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Version",
+    },
+  ],
 });
 
-const Document = mongoose.model("Document", DocumentSchema);
-
-module.exports = Document;
+module.exports = mongoose.model("Document", documentSchema);

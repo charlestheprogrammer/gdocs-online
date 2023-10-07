@@ -6,8 +6,10 @@ const versionSchema = new mongoose.Schema({
         ref: "Document",
     },
     content: String,
+    comment: [String],
     user: String,
     timestamp: Date,
+    description: String,
 });
 
 module.exports = mongoose.model("Version", versionSchema);

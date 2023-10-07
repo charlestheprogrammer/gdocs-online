@@ -4,12 +4,13 @@ const Version = require("../schemas/version");
 const Document = require("../schemas/document");
 
 // POST Update an existing document with new content
-router.post("/", async function (req, res) {
+const updateRouterMiddleware = (wss) => async (req, res, next) => {
     try {
         const documentId = req.body.documentId;
         const content = req.body.content;
         const user = req.body.user_name;
         const timestamp = req.body.timestamp;
+        const description = req.body.description;
 
         // Create a new version with user name, timestamp, and content
         const newVersion = new Version({
@@ -17,6 +18,7 @@ router.post("/", async function (req, res) {
             content,
             user,
             timestamp: timestamp,
+            description: description,
         });
 
         // Save the new version to the "versions" collection
@@ -26,7 +28,7 @@ router.post("/", async function (req, res) {
         await Document.findByIdAndUpdate(documentId, {
             $push: { versions: savedVersion._id },
         });
-
+        
         res.set("Access-Control-Allow-Origin", "*");
         res.send({
             message: "Document updated and saved as a new version",
@@ -36,6 +38,8 @@ router.post("/", async function (req, res) {
         console.error("Error updating and saving document:", error);
         res.status(500).json({ error: "Error updating and saving document" });
     }
-});
+};
 
-module.exports = router;
+router.post('/', updateRouterMiddleware);
+
+module.exports = updateRouterMiddleware;

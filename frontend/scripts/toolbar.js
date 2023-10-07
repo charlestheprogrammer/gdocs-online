@@ -15,6 +15,7 @@ const user_colors = [
 ];
 let document_content = "";
 let document_content_element = document.getElementById("page-content");
+let document_version_panel = document.getElementById("change-list");
 let optionsButtons = document.querySelectorAll(".option-button");
 let fontSizeRef = document.getElementById("fontSize");
 let advancedOptionButton = document.querySelectorAll(".adv-option-button");
@@ -26,6 +27,12 @@ const toggleHistory = document.getElementById("toggle_history");
 let saveButton = document.getElementById("save");
 let openButton = document.getElementById("open");
 let newButton = document.getElementById("new");
+const options = {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+};
 
 const modifyText = (command, defaultUi, value) => {
     document.execCommand(command, defaultUi, value);
@@ -147,9 +154,92 @@ openButton.addEventListener("click", () => {
         });
 });
 
+async function displayDocumentVersionsonOpen() {
+    const changeList = document.getElementById("change-list");
+    changeList.innerHTML = ""; // Clear any previous entries
+  
+    try {
+      const documentId = localStorage.getItem("idDocument");
+  
+      if (!documentId) {
+        console.error("Document ID is not available in localStorage");
+        return;
+      }
+  
+      const response = await fetch(`http://localhost:3000/getDocumentUpdates/${documentId}`);
+      if (response.ok) {
+        const versions = await response.json();
+        versions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+        versions.forEach((version) => {
+          const versionId = version._id;
+          const entry = document.createElement("div");
+          entry.classList.add("change_entry");
+          entry.innerHTML = `
+            <p>Le ${new Date(version.timestamp).toLocaleString("fr-FR",options)}</p>
+            <p>${version.user} : ${version.description?version.description:"Updated content"}</p>
+          `;
+          changeList.appendChild(entry);
+
+          if (versionId !== null)
+                {
+                    entry.dataset.versionId = versionId;
+                    const rollbackButton = document.createElement("button");
+                    rollbackButton.innerText = "Rollback";
+                    rollbackButton.classList.add("rollback-button");
+                    entry.appendChild(rollbackButton);
+                    rollbackButton.addEventListener("click", async () => {
+                    // Show a confirmation dialog before performing the rollbac
+                    const confirmation = confirm("Are you sure you want to rollback to this version?");
+                    if (confirmation) {
+                        rollbackToVersion(versionId);
+                    }
+                });
+                }
+
+        });
+      } else {
+        console.error("Failed to fetch document versions");
+      }
+    } catch (error) {
+      console.error("Error fetching document versions:", error);
+    }
+  }
+
 function toggleHistoryPannel() {
     changeHistory.classList.toggle("open");
+    displayDocumentVersionsonOpen();
 }
+function rollbackToVersion(versionId) {
+    // Make a request to retrieve the specific version content
+    fetch(`http://localhost:3000/getUpdate/${versionId}`)
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("Failed to retrieve version content");
+            }
+        })
+        .then((version) => {
+            if (version && version.content) {
+                // Update the page content
+                document.getElementById("page-content").innerHTML = version.content;
+
+                // Create a new version entry with rollback description
+                addToChangeHistory(
+                    localStorage.getItem("username"),
+                    new Date().toLocaleString("fr-FR", options),
+                    new Date().toISOString(),
+                    `Rollback to version: ${versionId}`,
+                    version.content,
+                );
+            }
+        })
+        .catch((error) => {
+            console.error("Error rolling back to version:", error);
+        });
+}
+
 
 function openFile(document_id) {
     fetch("http://localhost:3000/openFile/" + document_id)
@@ -178,6 +268,20 @@ function openFile(document_id) {
         .catch((err) => {
             console.log(err);
         });
+}
+
+function attachRollbackListener() {
+    const rollbackButtons = document.querySelectorAll(".rollback-button");
+    rollbackButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const versionId = button.parentElement.dataset.versionId;
+            // Show a confirmation dialog before performing the rollback
+            const confirmation = confirm("Are you sure you want to rollback to this version?");
+            if (confirmation) {
+                rollbackToVersion(versionId);
+            }
+        });
+    });
 }
 
 const newDocumentFunction = async () => {
