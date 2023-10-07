@@ -150,7 +150,7 @@
                         token: localStorage.getItem("token"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
-                        version: document_version_panel.innerHTML
+                        version: document_version_panel.innerHTML,
                     })
                 );
             }
@@ -171,7 +171,6 @@
             });
 
             async function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
-
                 const versionId = await saveContentToDatabase(user, isotimestamp, pageContent, changeDescription);
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
@@ -179,20 +178,19 @@
 
                 entry.innerHTML = `<p>Le ${timestamp}</p><p>${user} : ${changeDescription}</p>`;
                 changeList.prepend(entry);
-                if (versionId !== null)
-                {
+                if (versionId !== null) {
                     entry.dataset.versionId = versionId;
                     const rollbackButton = document.createElement("button");
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
                     entry.appendChild(rollbackButton);
                     rollbackButton.addEventListener("click", async () => {
-                    // Show a confirmation dialog before performing the rollback
-                    const confirmation = confirm("Are you sure you want to rollback to this version?");
-                    if (confirmation) {
-                        rollbackToVersion(versionId);
-                    }
-                });
+                        // Show a confirmation dialog before performing the rollback
+                        const confirmation = confirm("Are you sure you want to rollback to this version?");
+                        if (confirmation) {
+                            rollbackToVersion(versionId);
+                        }
+                    });
                 }
                 updateContent();
             }
@@ -239,8 +237,7 @@
                     const username = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    if (!currentContent)
-                        localStorage.setItem("currentContent", pageContent);    
+                    if (!currentContent) localStorage.setItem("currentContent", pageContent);
                     // Generate a description of the changes (e.g., added/removed text)
                     if (pageContent !== currentContent) {
                         const changeDescription = generateChangeDescription(currentContent, pageContent);
@@ -281,8 +278,6 @@
 
                 return diffs;
             }
-
-
 
             // Attach an event listener to the editable div for text input
             document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);

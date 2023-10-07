@@ -57,11 +57,11 @@ router.get("/:document_id", async function (req, res) {
         return;
     }
     const document_id = req.params.document_id;
-    
+
     try {
         // Find the document by its ID
         const documentFound = await DocumentSchema.findById(document_id);
-        
+
         if (!documentFound) {
             return res.status(404).send({
                 message: "Document not found",
@@ -69,17 +69,13 @@ router.get("/:document_id", async function (req, res) {
         }
 
         // Find the last version, if any
-        const lastVersion = await VersionSchema.findOne({ document: document_id })
-            .sort({ timestamp: -1 })
-            .limit(1);
+        const lastVersion = await VersionSchema.findOne({ document: document_id }).sort({ timestamp: -1 }).limit(1);
 
         // Find the last save, if any
-        const lastSave = await SaveSchema.findOne({ document: document_id })
-            .sort({ date: -1 })
-            .limit(1);
+        const lastSave = await SaveSchema.findOne({ document: document_id }).sort({ date: -1 }).limit(1);
 
         // Determine the content based on the last version or save
-        const contentFound = lastVersion ? lastVersion.content : (lastSave ? lastSave.content : "");
+        const contentFound = lastVersion ? lastVersion.content : lastSave ? lastSave.content : "";
 
         res.set("Access-Control-Allow-Origin", "*");
         res.send({

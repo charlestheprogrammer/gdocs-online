@@ -158,54 +158,52 @@ openButton.addEventListener("click", () => {
 async function displayDocumentVersionsonOpen() {
     const changeList = document.getElementById("change-list");
     changeList.innerHTML = ""; // Clear any previous entries
-  
-    try {
-      const documentId = localStorage.getItem("idDocument");
-  
-      if (!documentId) {
-        console.error("Document ID is not available in localStorage");
-        return;
-      }
-  
-      const response = await fetch(`http://localhost:3000/getDocumentUpdates/${documentId}`);
-      if (response.ok) {
-        const versions = await response.json();
-        versions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  
-        versions.forEach((version) => {
-          const versionId = version._id;
-          const entry = document.createElement("div");
-          entry.classList.add("change_entry");
-          entry.innerHTML = `
-            <p>Le ${new Date(version.timestamp).toLocaleString("fr-FR",options)}</p>
-            <p>${version.user} : ${version.description?version.description:"Updated content"}</p>
-          `;
-          changeList.appendChild(entry);
 
-          if (versionId !== null)
-                {
+    try {
+        const documentId = localStorage.getItem("idDocument");
+
+        if (!documentId) {
+            console.error("Document ID is not available in localStorage");
+            return;
+        }
+
+        const response = await fetch(`http://localhost:3000/getDocumentUpdates/${documentId}`);
+        if (response.ok) {
+            const versions = await response.json();
+            versions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            versions.forEach((version) => {
+                const versionId = version._id;
+                const entry = document.createElement("div");
+                entry.classList.add("change_entry");
+                entry.innerHTML = `
+            <p>Le ${new Date(version.timestamp).toLocaleString("fr-FR", options)}</p>
+            <p>${version.user} : ${version.description ? version.description : "Updated content"}</p>
+          `;
+                changeList.appendChild(entry);
+
+                if (versionId !== null) {
                     entry.dataset.versionId = versionId;
                     const rollbackButton = document.createElement("button");
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
                     entry.appendChild(rollbackButton);
                     rollbackButton.addEventListener("click", async () => {
-                    // Show a confirmation dialog before performing the rollbac
-                    const confirmation = confirm("Are you sure you want to rollback to this version?");
-                    if (confirmation) {
-                        rollbackToVersion(versionId);
-                    }
-                });
+                        // Show a confirmation dialog before performing the rollbac
+                        const confirmation = confirm("Are you sure you want to rollback to this version?");
+                        if (confirmation) {
+                            rollbackToVersion(versionId);
+                        }
+                    });
                 }
-
-        });
-      } else {
-        console.error("Failed to fetch document versions");
-      }
+            });
+        } else {
+            console.error("Failed to fetch document versions");
+        }
     } catch (error) {
-      console.error("Error fetching document versions:", error);
+        console.error("Error fetching document versions:", error);
     }
-  }
+}
 
 function toggleHistoryPannel() {
     changeHistory.classList.toggle("open");
@@ -232,7 +230,7 @@ function rollbackToVersion(versionId) {
                     new Date().toLocaleString("fr-FR", options),
                     new Date().toISOString(),
                     `Rollback to version: ${versionId}`,
-                    version.content,
+                    version.content
                 );
             }
         })
@@ -240,7 +238,6 @@ function rollbackToVersion(versionId) {
             console.error("Error rolling back to version:", error);
         });
 }
-
 
 function openFile(document_id) {
     fetch("http://macbook-pro-c.local:3000/openFile/" + document_id, {
