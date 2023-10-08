@@ -52,13 +52,14 @@ imageInput.addEventListener("change", () => {
         const resizeableImage = document.createElement("div");
         resizeableImage.classList.add("resizeable_div");
         const img = new Image();
-        fetch("http://localhost:3000/images/upload", {
+        fetch("http://macbook-pro-c.local:3000/images/upload", {
             method: "POST",
             body: JSON.stringify({
                 base64Image: reader.result,
             }),
             headers: {
                 "Content-Type": "application/json",
+                Authorization: localStorage.getItem("token"),
             },
         })
             .then((res) => {
@@ -99,14 +100,14 @@ colorsOptionButton.forEach((button) => {
 });
 
 const savButtonFunction = async () => {
-    const responseAsync = fetch("http://localhost:3000/save", {
+    const responseAsync = fetch("http://macbook-pro-c.local:3000/save", {
         body: JSON.stringify({
             id: localStorage.getItem("idDocument"),
             title: document_title,
             content: document_content_element.innerHTML,
         }),
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", token: localStorage.getItem("token") },
     });
     document.getElementById("temp_info").innerHTML = "Enregistrement...";
     const response = await responseAsync;
@@ -118,12 +119,12 @@ const savButtonFunction = async () => {
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "";
     }, 2000);
-}
+};
 
 saveButton.addEventListener("click", savButtonFunction);
 
 openButton.addEventListener("click", () => {
-    fetch("http://localhost:3000/api/documents")
+    fetch("http://macbook-pro-c.local:3000/api/documents")
         .then((res) => {
             res.json().then((body) => {
                 let openModal = document.querySelector(".openModal");
@@ -152,8 +153,21 @@ function toggleHistoryPannel() {
 }
 
 function openFile(document_id) {
-    fetch("http://localhost:3000/openFile/" + document_id)
+    fetch("http://macbook-pro-c.local:3000/openFile/" + document_id, {
+        headers: {
+            Authorization: localStorage.getItem("token"),
+        },
+    })
         .then((res) => {
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    document.getElementById("unauthorizedModal").style.display = "flex";
+                    return;
+                } else {
+                    document.getElementById("unreachableModal").style.display = "flex";
+                }
+                return;
+            }
             res.json().then((data) => {
                 document_title = data.document.title;
                 document_content_element.innerHTML = data.content;
@@ -163,7 +177,7 @@ function openFile(document_id) {
                 socket.send(
                     JSON.stringify({
                         type: "joinDocument",
-                        username: localStorage.getItem("username"),
+                        token: localStorage.getItem("token"),
                         origin: origin,
                         destination: document_id,
                     })
@@ -173,10 +187,11 @@ function openFile(document_id) {
                 document.querySelectorAll(".connected_user").forEach((user) => {
                     user.remove();
                 });
+                document.getElementById("unauthorizedModal").style.display = "none";
             });
         })
         .catch((err) => {
-            console.log(err);
+            document.getElementById("unreachableModal").style.display = "flex";
         });
 }
 
@@ -193,7 +208,7 @@ const newDocumentFunction = async () => {
     socket.send(
         JSON.stringify({
             type: "joinDocument",
-            username: localStorage.getItem("username"),
+            token: localStorage.getItem("token"),
             origin: origin,
             destination: localStorage.getItem("idDocument"),
         })
