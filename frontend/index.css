@@ -206,7 +206,14 @@ header > div:last-of-type img:hover + p {
     border-radius: 20px;
     padding: 0.5rem;
     background-color: #e9edf5;
-    overflow: auto;
+    overflow-x: auto;
+    height: 50px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.toolbar::-webkit-scrollbar {
+    display: none;
 }
 
 .toolbar > select,
@@ -455,7 +462,7 @@ header > div:last-of-type img:hover + p {
     letter-spacing: 0.3px;
 }
 
-.change_entry p:not(:first-child)::before {
+.change_entry p:nth-child(2):before {
     content: "";
     background-color: rgb(62, 172, 62);
     width: 7px;
@@ -464,4 +471,27 @@ header > div:last-of-type img:hover + p {
     display: inline-block;
     margin-right: 5px;
     transform: translateY(-1px);
+}
+
+.change_entry * {
+    margin: 0;
+    padding: 0;
+    font-size: 0.85rem;
+    margin-top: 3px;
+    font-weight: 400;
+    color: #2a2a2a;
+    letter-spacing: 0.3px;
+}
+
+.change_entry button {
+    border: none;
+    outline: none;
+    background-color: rgb(96, 140, 238);
+    cursor: pointer;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+    letter-spacing: 0.3px;
+    color: #fff;
+    padding: 0.15rem 0.5rem;
 }

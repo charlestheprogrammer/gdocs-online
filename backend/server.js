@@ -16,6 +16,7 @@ const db = require("./db");
 const User = require("./schemas/user");
 const Document = require("./schemas/document");
 const SaveSchema = require("./schemas/save");
+const VersionSchema = require("./schemas/version");
 
 app.options("*", cors());
 app.use(express.json({ limit: "50mb" }));
@@ -164,12 +165,21 @@ async function startServer() {
             const items = await Document.find({});
             const documents = [];
             for (let i = 0; i < items.length; i++) {
-                let saveFound = await SaveSchema.findOne({ document: items[i] }).sort({ date: -1 }).exec();
+                const lastVersion = await VersionSchema.findOne({ document: items[i] })
+                    .sort({ timestamp: -1 })
+                    .limit(1);
+
+                // Find the last save, if any
+                const lastSave = await SaveSchema.findOne({ document: items[i] }).sort({ date: -1 }).limit(1);
+
+                // Determine the content based on the last version or save
+                const contentFound = lastVersion ? lastVersion.content : lastSave ? lastSave.content : "";
+                const date = lastVersion ? lastVersion.timestamp : lastSave ? lastSave.date : null;
                 documents.push({
                     _id: items[i]._id,
                     title: items[i].title,
-                    lastSave: saveFound.date,
-                    content: saveFound.content,
+                    lastSave: date,
+                    content: contentFound,
                 });
             }
 

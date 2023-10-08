@@ -7,6 +7,7 @@
         <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <link rel="stylesheet" href="../index.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
     </head>
 
     <body>
@@ -171,7 +172,7 @@
             });
 
             async function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
-                const versionId = await saveContentToDatabase(user, isotimestamp, pageContent, changeDescription);
+                const versionId = await saveContentToDatabase(isotimestamp, pageContent, changeDescription);
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
                 entry.classList.add("change_entry");
@@ -184,7 +185,7 @@
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
                     entry.appendChild(rollbackButton);
-                    rollbackButton.addEventListener("click", async () => {
+                    entry.addEventListener("click", async () => {
                         // Show a confirmation dialog before performing the rollback
                         const confirmation = confirm("Are you sure you want to rollback to this version?");
                         if (confirmation) {
@@ -195,7 +196,7 @@
                 updateContent();
             }
 
-            async function saveContentToDatabase(user, timestamp, content, description) {
+            async function saveContentToDatabase(timestamp, content, description) {
                 try {
                     const response = await fetch("http://macbook-pro-c.local:3000/update", {
                         method: "POST",
@@ -242,7 +243,7 @@
                     if (pageContent !== currentContent) {
                         const changeDescription = generateChangeDescription(currentContent, pageContent);
                         addToChangeHistory(
-                            user_name,
+                            username,
                             new Date().toLocaleString("fr-FR", options),
                             new Date().toISOString(),
                             changeDescription,
@@ -314,10 +315,6 @@
                     document.getElementById("user_picture").src = userInfos.image;
                     document_content_element.focus();
                     initSocket();
-                    if (localStorage.getItem("idDocument") != null) {
-                        openFile(localStorage.getItem("idDocument"));
-                    }
-                    updateTitle();
                 }
             };
         </script>

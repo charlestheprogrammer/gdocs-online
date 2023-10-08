@@ -146,6 +146,10 @@ function initSocket() {
                 token: localStorage.getItem("token"),
             })
         );
+        if (localStorage.getItem("idDocument") != null) {
+            openFile(localStorage.getItem("idDocument"));
+        }
+        updateTitle();
     };
 
     socket.onclose = () => {

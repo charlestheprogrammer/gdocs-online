@@ -8,7 +8,7 @@ router.get("/:documentId", async function (req, res) {
         const documentId = req.params.documentId;
 
         // Find all versions of the specified document
-        const versions = await Version.find({ document: documentId }).sort({
+        const versions = await Version.find({ document: documentId }).populate("user").sort({
             timestamp: 1,
         });
 

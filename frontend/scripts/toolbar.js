@@ -106,7 +106,7 @@ colorsOptionButton.forEach((button) => {
     });
 });
 
-const savButtonFunction = async () => {
+const saveButtonFunction = async () => {
     const responseAsync = fetch("http://macbook-pro-c.local:3000/save", {
         body: JSON.stringify({
             id: localStorage.getItem("idDocument"),
@@ -128,7 +128,7 @@ const savButtonFunction = async () => {
     }, 2000);
 };
 
-saveButton.addEventListener("click", savButtonFunction);
+saveButton.addEventListener("click", saveButtonFunction);
 
 openButton.addEventListener("click", () => {
     fetch("http://macbook-pro-c.local:3000/api/documents")
@@ -178,7 +178,7 @@ async function displayDocumentVersionsonOpen() {
                 entry.classList.add("change_entry");
                 entry.innerHTML = `
             <p>Le ${new Date(version.timestamp).toLocaleString("fr-FR", options)}</p>
-            <p>${version.user} : ${version.description ? version.description : "Updated content"}</p>
+            <p>${version.user.name} : ${version.description ? version.description : "Updated content"}</p>
           `;
                 changeList.appendChild(entry);
 
@@ -188,7 +188,7 @@ async function displayDocumentVersionsonOpen() {
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
                     entry.appendChild(rollbackButton);
-                    rollbackButton.addEventListener("click", async () => {
+                    entry.addEventListener("click", async () => {
                         // Show a confirmation dialog before performing the rollbac
                         const confirmation = confirm("Are you sure you want to rollback to this version?");
                         if (confirmation) {
@@ -211,6 +211,7 @@ function toggleHistoryPannel() {
 }
 function rollbackToVersion(versionId) {
     // Make a request to retrieve the specific version content
+    console.log(versionId);
     fetch(`http://localhost:3000/getUpdate/${versionId}`)
         .then((response) => {
             if (response.ok) {
@@ -232,6 +233,8 @@ function rollbackToVersion(versionId) {
                     `Rollback to version: ${versionId}`,
                     version.content
                 );
+
+                saveButtonFunction();
             }
         })
         .catch((error) => {
@@ -305,7 +308,7 @@ const newDocumentFunction = async () => {
     document.querySelectorAll(".connected_user").forEach((user) => {
         user.remove();
     });
-    await savButtonFunction();
+    await saveButtonFunction();
     socket.send(
         JSON.stringify({
             type: "joinDocument",
