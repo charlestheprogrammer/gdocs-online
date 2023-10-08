@@ -18,7 +18,7 @@ const Document = require("./schemas/document");
 const SaveSchema = require("./schemas/save");
 
 app.options("*", cors());
-app.use(express.json({limit: '50mb'}));
+app.use(express.json({ limit: "50mb" }));
 
 var openFileRouter = require("./routes/openFile");
 var saveRouter = require("./routes/save");

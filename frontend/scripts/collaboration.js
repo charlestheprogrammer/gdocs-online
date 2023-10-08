@@ -137,7 +137,7 @@ function initSocket() {
             alert("You can't write");
         }
     };
-    
+
     socket.onopen = () => {
         connected = true;
         socket.send(
@@ -147,9 +147,9 @@ function initSocket() {
             })
         );
     };
-    
+
     socket.onclose = () => {
         console.log("Socket closed");
         connected = false;
-    };    
+    };
 }
