@@ -3,6 +3,7 @@ const UserResponsabilitySchema = require("../schemas/userResponsability");
 const UserSchema = require("../schemas/user");
 
 const { userWantToWrite } = require("../misc/chainOfResponsability");
+const { getAuthenticatedUser } = require("../authentification");
 
 function setCursorPosition(ws, message, identifiedUsers) {
     Object.keys(identifiedUsers).forEach((username) => {
@@ -12,20 +13,25 @@ function setCursorPosition(ws, message, identifiedUsers) {
     });
 }
 
-async function updateDocument(ws, message, identifiedUsers) {
-    const user = await UserSchema.findOne({ name: message.username }).exec();
+async function updateDocument(ws, message, identifiedUsers, user) {
     const userResponsability = await UserResponsabilitySchema.findOne({
         user: user._id,
         document: message.document,
     }).exec();
     if (!userResponsability || !userResponsability.writePermission) {
         const allowedUsers = await userWantToWrite(message.document);
+        ws.send(
+            JSON.stringify({
+                type: "cantWrite",
+                document: message.document,
+            })
+        );
         if (allowedUsers) {
             for (const allowedUser of allowedUsers) {
                 if (!allowedUser.user) {
                     continue;
                 }
-                identifiedUsers[allowedUser.user.name]?.socket.send(
+                identifiedUsers[allowedUser.user.userId]?.socket.send(
                     JSON.stringify({
                         type: "requestWrite",
                         document: message.document,
@@ -43,8 +49,8 @@ async function updateDocument(ws, message, identifiedUsers) {
     });
 }
 
-function switchDocument(ws, message, identifiedUsers) {
-    identifiedUsers[message.username] = {
+async function switchDocument(ws, message, identifiedUsers, user) {
+    identifiedUsers[user.userId] = {
         socket: ws,
         document: message.destination,
     };
@@ -56,6 +62,7 @@ function switchDocument(ws, message, identifiedUsers) {
                     type: "leaveDocument",
                     username: ws.username,
                     document: message.origin,
+                    user: user,
                 })
             );
         } else if (identifiedUsers[username].document === message.destination && username !== ws.username) {
@@ -64,11 +71,18 @@ function switchDocument(ws, message, identifiedUsers) {
                     type: "joinDocument",
                     username: ws.username,
                     document: message.destination,
+                    user: user,
                 })
             );
-            usersInDocument.push(username);
+            usersInDocument.push({
+                username: username,
+            });
         }
     });
+    for (let i = 0; i < usersInDocument.length; i++) {
+        const user = await UserSchema.findOne({ userId: usersInDocument[i].username }).exec();
+        usersInDocument[i].user = user;
+    }
     ws.send(
         JSON.stringify({
             type: "usersInDocument",
@@ -93,7 +107,7 @@ function disconnect(ws, identifiedUsers) {
 }
 
 async function acceptRead(ws, message, identifiedUsers) {
-    const user = await UserSchema.findOne({ name: message.username }).exec();
+    const user = await UserSchema.findOne({ userId: message.user.userId }).exec();
     const userResponsability = await new UserResponsabilitySchema({
         user: user._id,
         document: message.document,
@@ -108,7 +122,7 @@ async function acceptRead(ws, message, identifiedUsers) {
             },
         }
     ).exec();
-    identifiedUsers[message.username].socket.send(
+    identifiedUsers[message.user.userId].socket.send(
         JSON.stringify({
             type: "acceptRead",
             document: message.document,
@@ -117,7 +131,7 @@ async function acceptRead(ws, message, identifiedUsers) {
 }
 
 async function acceptWrite(ws, message, identifiedUsers) {
-    const user = await UserSchema.findOne({ name: message.username }).exec();
+    const user = await UserSchema.findOne({ userId: message.user.userId }).exec();
     await UserResponsabilitySchema.updateOne(
         {
             user: user,
@@ -129,7 +143,7 @@ async function acceptWrite(ws, message, identifiedUsers) {
             },
         }
     ).exec();
-    identifiedUsers[message.username].socket.send(
+    identifiedUsers[message.user.userId].socket.send(
         JSON.stringify({
             type: "acceptWrite",
             document: message.document,
@@ -137,24 +151,30 @@ async function acceptWrite(ws, message, identifiedUsers) {
     );
 }
 
-function parseMessage(ws, message, clients, identifiedUsers) {
+async function parseMessage(ws, message, clients, identifiedUsers) {
     const messageObject = JSON.parse(message);
+    let user = null;
+    if (messageObject.type !== "cursorPosition") {
+        user = await getAuthenticatedUser(messageObject.token, true);
+        if (user == null) return;
+        messageObject.username = user.userId;
+    }
     switch (messageObject.type) {
         case "cursorPosition":
             setCursorPosition(ws, messageObject, identifiedUsers);
             break;
         case "updateDocument":
-            updateDocument(ws, messageObject, identifiedUsers);
+            updateDocument(ws, messageObject, identifiedUsers, user);
             break;
         case "joinDocument":
-            switchDocument(ws, messageObject, identifiedUsers);
+            switchDocument(ws, messageObject, identifiedUsers, user);
             break;
         case "leaveDocument":
             disconnect(ws, identifiedUsers);
             break;
         case "identify":
-            ws.username = messageObject.username;
-            identifiedUsers[messageObject.username] = {
+            ws.username = user.userId;
+            identifiedUsers[user.userId] = {
                 socket: ws,
             };
             break;

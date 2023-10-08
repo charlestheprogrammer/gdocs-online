@@ -16,6 +16,21 @@
                 <ul id="availableFiles"></ul>
             </div>
         </div>
+        <div class="modal" style="display: none" id="unauthorizedModal">
+            <div class="content">
+                <h1>Vous n'avez pas l'autorisation de voir ce document</h1>
+                <p>
+                    Une demande vient d'être faite à tous les utilisateurs en ligne pour vous donnez le droit d'accès.
+                    Restez connecté ici.
+                </p>
+            </div>
+        </div>
+        <div class="modal" style="display: none" id="unreachableModal">
+            <div class="content">
+                <h1>Impossible de trouver ce document</h1>
+                <p>Vérfiez votre connexion à internet et que ce doument existe</p>
+            </div>
+        </div>
         <header>
             <div>
                 <img src="../assets/gdocs.png" alt="" onclick="window.location.href='../'" />
@@ -120,10 +135,6 @@
         <script src="../scripts/collaboration.js"></script>
 
         <script>
-            if (!localStorage.getItem("username")) {
-                window.location.href = "./login/";
-            }
-
             let document_title = "Document sans titre";
             let cursor_pos = 0;
 
@@ -137,7 +148,7 @@
                 socket.send(
                     JSON.stringify({
                         type: "updateDocument",
-                        username: localStorage.getItem("username"),
+                        token: localStorage.getItem("token"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
                     })
@@ -171,15 +182,15 @@
 
             async function saveContentToDatabase(user, timestamp, content) {
                 try {
-                    const response = await fetch("http://localhost:3000/update", {
+                    const response = await fetch("http://macbook-pro-c.local:3000/update", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
+                            Authorization: localStorage.getItem("token"),
                         },
                         body: JSON.stringify({
                             documentId: localStorage.getItem("idDocument"),
                             content,
-                            user_name: user,
                             timestamp: timestamp,
                         }),
                     });
@@ -234,10 +245,7 @@
                 image: localStorage.getItem("image"),
             };
 
-            document.getElementById("user_name").innerHTML = userInfos.username.split(" ")[0];
-            document.getElementById("user_picture").src = userInfos.image;
-
-            fetch("http://localhost:3000/api/login", {
+            fetch("http://macbook-pro-c.local:3000/api/login", {
                 headers: {
                     Authorization: localStorage.getItem("token"),
                 },
@@ -259,11 +267,16 @@
             });
 
             window.onload = () => {
-                document_content_element.focus();
-                if (localStorage.getItem("idDocument") != null) {
-                    openFile(localStorage.getItem("idDocument"));
+                if (userInfos) {
+                    document.getElementById("user_name").innerHTML = userInfos.username.split(" ")[0];
+                    document.getElementById("user_picture").src = userInfos.image;
+                    document_content_element.focus();
+                    initSocket();
+                    if (localStorage.getItem("idDocument") != null) {
+                        openFile(localStorage.getItem("idDocument"));
+                    }
+                    updateTitle();
                 }
-                updateTitle();
             };
         </script>
     </body>

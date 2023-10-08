@@ -1,5 +1,6 @@
 const { OAuth2Client } = require("google-auth-library");
 const oauth2Client = new OAuth2Client();
+const UserSchema = require("./schemas/user");
 
 async function verify(token) {
     // FIXME : 'Error: Token used too early'
@@ -13,15 +14,16 @@ async function verify(token) {
     return userid;
 }
 
-async function getAuthenticatedUser(req) {
-    if (!req.headers.token) return null;
+async function getAuthenticatedUser(req, isToken = false) {
+    const token = isToken ? req : req.headers.authorization;
+    if (!token) return null;
     let userId = null;
     try {
-        userId = await verify(req.headers.token);
+        userId = await verify(token);
     } catch (error) {
         return null;
     }
-    const existingUser = await User.findOne({ userId: userId }).exec();
+    const existingUser = await UserSchema.findOne({ userId: userId }).exec();
     return existingUser;
 }
 

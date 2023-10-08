@@ -42,7 +42,7 @@
         <script src="./scripts/homePage.js"></script>
         <script src="./scripts/toolbar.js"></script>
         <script>
-            fetch("http://localhost:3000/api/login", {
+            fetch("http://macbook-pro-c.local:3000/api/login", {
                 headers: {
                     Authorization: localStorage.getItem("token"),
                 },
@@ -54,23 +54,24 @@
                     userInfos = {
                         username: data.name,
                         image: data.image_url,
+                        userId: data.userId,
                     };
                     localStorage.setItem("username", userInfos.username);
                     localStorage.setItem("image", userInfos.image);
+                    localStorage.setItem("userId", userInfos.userId);
                 });
             });
 
             async function newDocument() {
                 localStorage.removeItem("idDocument");
-                const responseAsync = fetch("http://localhost:3000/save", {
+                const responseAsync = fetch("http://macbook-pro-c.local:3000/save", {
                     body: JSON.stringify({
                         id: localStorage.getItem("idDocument"),
                         title: "Nouveau document",
                         content: "",
-                        username: localStorage.getItem("username"),
                     }),
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json", Authorization: localStorage.getItem("token") },
                 });
                 const response = await responseAsync;
                 const body = await response.json();

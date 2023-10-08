@@ -6,6 +6,7 @@ const UserSchema = require("../schemas/user");
 
 const { userWantToRead } = require("../misc/chainOfResponsability");
 const { identifiedUsers } = require("../misc/users");
+const { getAuthenticatedUser } = require("../authentification");
 
 var express = require("express");
 var router = express.Router();
@@ -13,9 +14,9 @@ var router = express.Router();
 /* GET Open a file based on his name. */
 router.get("/:document_id", async function (req, res) {
     res.set("Access-Control-Allow-Origin", "*");
-    const user = await UserSchema.findOne({ name: req.headers.username }).exec();
+    const user = await getAuthenticatedUser(req);
     if (!user) {
-        res.status(404).json({ error: "Utilisateur non trouvé" });
+        res.status(401).json({ error: "User not authenticated" });
         return;
     }
     const chainOfResponsability = await ChainOfResponsabilitySchema.findOne({
@@ -42,7 +43,7 @@ router.get("/:document_id", async function (req, res) {
                 if (!allowedUser.user) {
                     continue;
                 }
-                identifiedUsers[allowedUser.user.name]?.socket.send(
+                identifiedUsers[allowedUser.user.userId]?.socket.send(
                     JSON.stringify({
                         type: "requestRead",
                         document: req.params.document_id,
