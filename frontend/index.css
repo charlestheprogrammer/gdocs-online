@@ -23,6 +23,11 @@ body {
     justify-content: center;
 }
 
+.modal .content {
+    padding: 40px;
+    text-align: center;
+}
+
 .openModal {
     height: 100vh;
     width: 100vw;
@@ -201,7 +206,14 @@ header > div:last-of-type img:hover + p {
     border-radius: 20px;
     padding: 0.5rem;
     background-color: #e9edf5;
-    overflow: auto;
+    overflow-x: auto;
+    height: 50px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.toolbar::-webkit-scrollbar {
+    display: none;
 }
 
 .toolbar > select,
@@ -377,9 +389,8 @@ header > div:last-of-type img:hover + p {
     width: 25%;
     width: 280px;
     max-width: 90vw;
-    height: 100%;
+    height: 100vh;
     background-color: #fff;
-    overflow: auto;
     display: flex;
     flex-direction: column;
     z-index: 100;
@@ -405,9 +416,48 @@ header > div:last-of-type img:hover + p {
     top: 0;
     left: 0;
     width: 2px;
-    height: 100%;
+    height: 100vh;
     background-color: #cecece;
     cursor: e-resize;
+}
+
+.change_history #change-list {
+    flex: 1;
+    overflow: auto;
+}
+
+.comment-div {
+    display: flex;
+    gap: 5px;
+    margin-top: 9px !important;
+    padding-right: 10px !important;
+}
+
+.comment-div textarea {
+    flex: 4;
+    border: 1px solid #cecece;
+    border-radius: 4px;
+    outline: none;
+    padding: 6px 0.5rem;
+    resize: none;
+    font-size: 0.9rem;
+    font-family: "Inter", sans-serif;
+    color: #343434;
+    height: 56px;
+    margin: 0;
+}
+
+.comment-div button {
+    width: 30px;
+    margin: 0 !important;
+}
+
+.comment-div button i {
+    color: #fff;
+}
+
+.comment-div button:hover {
+    background-color: rgb(62, 172, 62) !important;
 }
 
 .change_history.open {
@@ -450,7 +500,7 @@ header > div:last-of-type img:hover + p {
     letter-spacing: 0.3px;
 }
 
-.change_entry p:not(:first-child)::before {
+.change_entry p:nth-child(2):before {
     content: "";
     background-color: rgb(62, 172, 62);
     width: 7px;
@@ -459,4 +509,32 @@ header > div:last-of-type img:hover + p {
     display: inline-block;
     margin-right: 5px;
     transform: translateY(-1px);
+}
+
+.change_entry * {
+    margin: 0;
+    padding: 0;
+    font-size: 0.85rem;
+    margin-top: 3px;
+    font-weight: 400;
+    color: #2a2a2a;
+    letter-spacing: 0.3px;
+}
+
+.change_entry button {
+    border: none;
+    outline: none;
+    background-color: rgb(96, 140, 238);
+    cursor: pointer;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+    letter-spacing: 0.3px;
+    color: #fff;
+    padding: 0.15rem 0.5rem;
+    margin-top: 10px;
+}
+
+.change_entry button:hover {
+    background-color: rgb(172, 62, 62);
 }

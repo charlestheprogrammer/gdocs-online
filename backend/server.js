@@ -1,8 +1,11 @@
 require("dotenv").config();
 
+const axios = require("axios");
 const cors = require("cors");
+
 const { WebSocketServer } = require("ws");
 const { parseMessage, disconnect } = require("./routes/collaboration");
+const { verify } = require("./authentification");
 
 const port = process.env.PORT || 3000;
 const mongoURI = process.env.MONGO_URI;
@@ -13,8 +16,10 @@ const db = require("./db");
 const User = require("./schemas/user");
 const Document = require("./schemas/document");
 const SaveSchema = require("./schemas/save");
+const VersionSchema = require("./schemas/version");
 
 app.options("*", cors());
+app.use(express.json({ limit: "50mb" }));
 
 var openFileRouter = require("./routes/openFile");
 var saveRouter = require("./routes/save");
@@ -22,6 +27,9 @@ var updateRouterMiddleware = require("./routes/update");
 var versionsRouter = require("./routes/getDocumentUpdates");
 var singleVersionRouter = require("./routes/getUpdate");
 var imageRouter = require("./routes/images");
+var rightsRouter = require("./routes/rights");
+
+const { identifiedUsers } = require("./misc/users");
 
 const wss = new WebSocketServer({ port: 3001 });
 
@@ -35,8 +43,6 @@ wss.getUniqueID = function () {
 };
 
 const clients = [];
-
-const identifiedUsers = {};
 
 wss.on("connection", function connection(ws) {
     ws.id = wss.getUniqueID();
@@ -63,6 +69,7 @@ app.use("/update", updateRouterMiddleware(wss));
 app.use("/getDocumentUpdates", versionsRouter);
 app.use("/getUpdate", singleVersionRouter);
 app.use("/images", imageRouter);
+app.use("/rights", rightsRouter);
 
 async function startServer() {
     // Connexion à la base de données
@@ -77,26 +84,50 @@ async function startServer() {
     // Définition des routes
 
     // POST /api/login : identification d'un utilisateur
-    app.post("/api/login", async (req, res) => {
+    app.get("/api/login", async (req, res) => {
         res.set("Access-Control-Allow-Origin", "*");
-        try {
-            const username = req.body.name;
-            const userimage = req.body.image_url;
-            const existingItem = await User.findOne({ name: username }).exec();
 
-            if (existingItem) {
-                res.status(200).json({ message: "Vous êtes identifié" });
-            } else {
+        const token = req.headers.authorization;
+        if (!token || token === "") {
+            res.status(400).send("Token manquant");
+            return;
+        }
+        let userId = null;
+        try {
+            userId = await verify(token);
+        } catch (error) {
+            res.status(401).send(error);
+            return;
+        }
+
+        if (!userId) {
+            res.status(401).send("Token invalide");
+            return;
+        }
+
+        try {
+            const existingItem = await User.findOne({ userId: userId }).exec();
+
+            if (!existingItem) {
+                const response = await axios.get("https://www.googleapis.com/oauth2/v3/tokeninfo", {
+                    params: { id_token: token },
+                });
+
+                const tokenInfo = response.data;
                 const user = new User({
-                    name: username,
-                    image_url: userimage,
+                    userId: userId,
+                    name: tokenInfo.name,
+                    image_url: tokenInfo.picture,
                 });
                 await user.save();
-                res.status(201).json({ message: "Vous êtes inscrit" });
+                res.status(201).send(JSON.stringify(user));
+                return;
+            } else {
+                res.status(200).send(JSON.stringify(existingItem));
+                return;
             }
-        } catch (err) {
-            console.error("Erreur lors de la gestion de l'utilisateur :", err);
-            res.status(500).json({ error: "Erreur interne survenue lors de l'identification" });
+        } catch (error) {
+            console.error("Erreur lors de la validation du token :", error);
         }
     });
 
@@ -134,12 +165,21 @@ async function startServer() {
             const items = await Document.find({});
             const documents = [];
             for (let i = 0; i < items.length; i++) {
-                let saveFound = await SaveSchema.findOne({ document: items[i] }).sort({ date: -1 }).exec();
+                const lastVersion = await VersionSchema.findOne({ document: items[i] })
+                    .sort({ timestamp: -1 })
+                    .limit(1);
+
+                // Find the last save, if any
+                const lastSave = await SaveSchema.findOne({ document: items[i] }).sort({ date: -1 }).limit(1);
+
+                // Determine the content based on the last version or save
+                const contentFound = lastVersion ? lastVersion.content : lastSave ? lastSave.content : "";
+                const date = lastVersion ? lastVersion.timestamp : lastSave ? lastSave.date : null;
                 documents.push({
                     _id: items[i]._id,
                     title: items[i].title,
-                    lastSave: saveFound.date,
-                    content: saveFound.content,
+                    lastSave: date,
+                    content: contentFound,
                 });
             }
 
@@ -220,5 +260,4 @@ process.on("SIGINT", () => {
 module.exports = {
     app,
     wss,
-    identifiedUsers,
 };

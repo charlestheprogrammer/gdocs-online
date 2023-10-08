@@ -59,13 +59,14 @@ imageInput.addEventListener("change", () => {
         const resizeableImage = document.createElement("div");
         resizeableImage.classList.add("resizeable_div");
         const img = new Image();
-        fetch("http://localhost:3000/images/upload", {
+        fetch("http://macbook-pro-c.local:3000/images/upload", {
             method: "POST",
             body: JSON.stringify({
                 base64Image: reader.result,
             }),
             headers: {
                 "Content-Type": "application/json",
+                Authorization: localStorage.getItem("token"),
             },
         })
             .then((res) => {
@@ -105,15 +106,15 @@ colorsOptionButton.forEach((button) => {
     });
 });
 
-const savButtonFunction = async () => {
-    const responseAsync = fetch("http://localhost:3000/save", {
+const saveButtonFunction = async () => {
+    const responseAsync = fetch("http://macbook-pro-c.local:3000/save", {
         body: JSON.stringify({
             id: localStorage.getItem("idDocument"),
             title: document_title,
             content: document_content_element.innerHTML,
         }),
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", token: localStorage.getItem("token") },
     });
     document.getElementById("temp_info").innerHTML = "Enregistrement...";
     const response = await responseAsync;
@@ -128,10 +129,10 @@ const savButtonFunction = async () => {
     }, 2000);
 };
 
-saveButton.addEventListener("click", savButtonFunction);
+saveButton.addEventListener("click", saveButtonFunction);
 
 openButton.addEventListener("click", () => {
-    fetch("http://localhost:3000/api/documents")
+    fetch("http://macbook-pro-c.local:3000/api/documents")
         .then((res) => {
             res.json().then((body) => {
                 let openModal = document.querySelector(".openModal");
@@ -178,7 +179,7 @@ async function displayDocumentVersionsonOpen() {
                 entry.classList.add("change_entry");
                 entry.innerHTML = `
             <p>Le ${new Date(version.timestamp).toLocaleString("fr-FR", options)}</p>
-            <p>${version.user} : ${version.description ? version.description : "Updated content"}</p>
+            <p>${version.user.name} : ${version.description ? version.description : "Updated content"}</p>
           `;
                 changeList.appendChild(entry);
 
@@ -187,6 +188,25 @@ async function displayDocumentVersionsonOpen() {
                     const rollbackButton = document.createElement("button");
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
+
+                    // Creating the comment div
+                    const commentDiv = document.createElement("div");
+                    commentDiv.classList.add("comment-div");
+                    const commentTextarea = document.createElement("textarea");
+                    commentTextarea.classList.add("comment-input");
+                    commentTextarea.placeholder = "Commentaire";
+                    commentDiv.id = "comment-div-" + versionId;
+                    commentDiv.appendChild(commentTextarea);
+                    const commentButton = document.createElement("button");
+                    commentButton.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                    commentDiv.appendChild(commentButton);
+                    // Ending the creation of the comment div
+
+                    entry.appendChild(commentDiv);
+                    commentButton.addEventListener("click", async () => {
+                        const comment = commentTextarea.value;
+                        console.log(comment);
+                    });
                     entry.appendChild(rollbackButton);
                     rollbackButton.addEventListener("click", async () => {
                         // Show a confirmation dialog before performing the rollbac
@@ -211,6 +231,7 @@ function toggleHistoryPannel() {
 }
 function rollbackToVersion(versionId) {
     // Make a request to retrieve the specific version content
+    console.log(versionId);
     fetch(`http://localhost:3000/getUpdate/${versionId}`)
         .then((response) => {
             if (response.ok) {
@@ -232,6 +253,8 @@ function rollbackToVersion(versionId) {
                     `Rollback to version: ${versionId}`,
                     version.content
                 );
+
+                saveButtonFunction();
             }
         })
         .catch((error) => {
@@ -240,8 +263,21 @@ function rollbackToVersion(versionId) {
 }
 
 function openFile(document_id) {
-    fetch("http://localhost:3000/openFile/" + document_id)
+    fetch("http://macbook-pro-c.local:3000/openFile/" + document_id, {
+        headers: {
+            Authorization: localStorage.getItem("token"),
+        },
+    })
         .then((res) => {
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    document.getElementById("unauthorizedModal").style.display = "flex";
+                    return;
+                } else {
+                    document.getElementById("unreachableModal").style.display = "flex";
+                }
+                return;
+            }
             res.json().then((data) => {
                 document_title = data.document.title;
                 document_content_element.innerHTML = data.content;
@@ -252,7 +288,7 @@ function openFile(document_id) {
                 socket.send(
                     JSON.stringify({
                         type: "joinDocument",
-                        username: localStorage.getItem("username"),
+                        token: localStorage.getItem("token"),
                         origin: origin,
                         destination: document_id,
                     })
@@ -262,10 +298,11 @@ function openFile(document_id) {
                 document.querySelectorAll(".connected_user").forEach((user) => {
                     user.remove();
                 });
+                document.getElementById("unauthorizedModal").style.display = "none";
             });
         })
         .catch((err) => {
-            console.log(err);
+            document.getElementById("unreachableModal").style.display = "flex";
         });
 }
 
@@ -297,7 +334,7 @@ const newDocumentFunction = async () => {
     socket.send(
         JSON.stringify({
             type: "joinDocument",
-            username: localStorage.getItem("username"),
+            token: localStorage.getItem("token"),
             origin: origin,
             destination: localStorage.getItem("idDocument"),
         })

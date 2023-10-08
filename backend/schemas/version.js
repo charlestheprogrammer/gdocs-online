@@ -7,7 +7,10 @@ const versionSchema = new mongoose.Schema({
     },
     content: String,
     comment: [String],
-    user: String,
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+    },
     timestamp: Date,
     description: String,
 });

@@ -18,7 +18,8 @@ page_holder.addEventListener("mousemove", function (event) {
     socket.send(
         JSON.stringify({
             type: "cursorPosition",
-            username: localStorage.getItem("username"),
+            username: localStorage.getItem("userId"),
+            name: localStorage.getItem("username"),
             document: localStorage.getItem("idDocument"),
             data: {
                 x: x / pageSize.width,
@@ -34,10 +35,10 @@ function manageNewCursorPosition(data) {
         cursor.classList.add("cursor");
         cursor.id = "cursor_" + data.username;
         let p = document.createElement("p");
-        p.innerHTML = data.username;
+        p.innerHTML = data.name.split(" ")[0];
         cursor.appendChild(p);
         document.querySelector(".users_cursors").appendChild(cursor);
-        cursor.style.backgroundColor = user_colors[Math.floor(Math.random() * (user_colors.length - 1 - 0 + 1)) + 0];
+        cursor.style.backgroundColor = user_colors[document.querySelector(".users_cursors").children.length - 1];
         p.style.color = cursor.style.backgroundColor;
     }
     const cursor = document.getElementById("cursor_" + data.username);
@@ -59,53 +60,100 @@ function userJoin(data) {
     userInfo.id = "connected_users_" + data.username;
     userInfo.classList.add("connected_user");
     const userImage = document.createElement("img");
-    userImage.src = "./assets/csimonmeunier.png";
+    userImage.src = data.user.image_url;
     const userName = document.createElement("p");
-    userName.innerHTML = data.username;
+    userName.innerHTML = data.user.name.split(" ")[0];
     userInfo.appendChild(userImage);
     userInfo.appendChild(userName);
     connected_users.appendChild(userInfo);
 }
 
-const socket = new WebSocket("ws://localhost:3001");
+let socket;
 
-socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.username == localStorage.getItem("username")) return;
-    // if (data.document != localStorage.getItem("idDocument")) return;
-    if (data.type == "cursorPosition") {
-        if (data.document != localStorage.getItem("idDocument")) return;
-        manageNewCursorPosition(data);
-    } else if (data.type == "updateDocument") {
-        if (data.document != localStorage.getItem("idDocument")) return;
-        document_content_element.innerHTML = data.content;
-        document_version_panel.innerHTML = data.version;
-        attachRollbackListener();
-    } else if (data.type == "leaveDocument") {
-        userLeave(data);
-    } else if (data.type == "joinDocument") {
-        if (data.document != localStorage.getItem("idDocument")) return;
-        userJoin(data);
-    } else if (data.type == "usersInDocument") {
-        data.users.forEach((user) => {
-            userJoin({
-                username: user,
+function initSocket() {
+    socket = new WebSocket("ws://macbook-pro-c.local:3001");
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type !== "cursorPosition") {
+            console.log(data);
+        }
+        if (data.username == localStorage.getItem("userId")) return;
+        // if (data.document != localStorage.getItem("idDocument")) return;
+        if (data.type == "cursorPosition") {
+            if (data.document != localStorage.getItem("idDocument")) return;
+            manageNewCursorPosition(data);
+        } else if (data.type == "updateDocument") {
+            if (data.document != localStorage.getItem("idDocument")) return;
+            document_content_element.innerHTML = data.content;
+        } else if (data.type == "leaveDocument") {
+            userLeave(data);
+        } else if (data.type == "joinDocument") {
+            if (data.document != localStorage.getItem("idDocument")) return;
+            userJoin(data);
+        } else if (data.type == "usersInDocument") {
+            data.users.forEach((user) => {
+                userJoin(user);
             });
-        });
-    }
-};
+        } else if (data.type == "requestRead") {
+            if (window.confirm(`Donnez à ${data.user.name} le droit de lire le document ${data.document} ?`)) {
+                socket.send(
+                    JSON.stringify({
+                        type: "acceptRead",
+                        username: data.user.name,
+                        document: data.document,
+                        user: data.user,
+                        token: localStorage.getItem("token"),
+                    })
+                );
+            }
+        } else if (data.type == "acceptRead") {
+            openFile(data.document);
+        } else if (data.type == "requestWrite") {
+            if (window.confirm(`Donnez à ${data.user.name} le droit d'écrire dans le document ${data.document} ?`)) {
+                socket.send(
+                    JSON.stringify({
+                        type: "acceptWrite",
+                        username: data.user.name,
+                        document: data.document,
+                        user: data.user,
+                        token: localStorage.getItem("token"),
+                    })
+                );
+            }
+        } else if (data.type == "acceptWrite") {
+            document_content_element.contentEditable = true;
+        } else if (data.type == "cantWrite") {
+            document_content_element.contentEditable = false;
+            document_content_element.addEventListener("click", () => {
+                socket.send(
+                    JSON.stringify({
+                        type: "updateDocument",
+                        token: localStorage.getItem("token"),
+                        document: localStorage.getItem("idDocument"),
+                        content: document_content_element.innerHTML,
+                    })
+                );
+            });
+            alert("You can't write");
+        }
+    };
 
-socket.onopen = () => {
-    connected = true;
-    socket.send(
-        JSON.stringify({
-            type: "identify",
-            username: localStorage.getItem("username"),
-        })
-    );
-};
+    socket.onopen = () => {
+        connected = true;
+        socket.send(
+            JSON.stringify({
+                type: "identify",
+                token: localStorage.getItem("token"),
+            })
+        );
+        if (localStorage.getItem("idDocument") != null) {
+            openFile(localStorage.getItem("idDocument"));
+        }
+        updateTitle();
+    };
 
-socket.onclose = () => {
-    console.log("Socket closed");
-    connected = false;
-};
+    socket.onclose = () => {
+        console.log("Socket closed");
+        connected = false;
+    };
+}

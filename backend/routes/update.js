@@ -3,12 +3,18 @@ const router = express.Router();
 const Version = require("../schemas/version");
 const Document = require("../schemas/document");
 
+const { getAuthenticatedUser } = require("../authentification");
+
 // POST Update an existing document with new content
 const updateRouterMiddleware = (wss) => async (req, res, next) => {
     try {
         const documentId = req.body.documentId;
         const content = req.body.content;
-        const user = req.body.user_name;
+        const user = await getAuthenticatedUser(req);
+        if (!user) {
+            res.status(401).json({ error: "User not authenticated" });
+            return;
+        }
         const timestamp = req.body.timestamp;
         const description = req.body.description;
 
