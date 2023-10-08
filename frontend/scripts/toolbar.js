@@ -187,8 +187,27 @@ async function displayDocumentVersionsonOpen() {
                     const rollbackButton = document.createElement("button");
                     rollbackButton.innerText = "Rollback";
                     rollbackButton.classList.add("rollback-button");
+
+                    // Creating the comment div
+                    const commentDiv = document.createElement("div");
+                    commentDiv.classList.add("comment-div");
+                    const commentTextarea = document.createElement("textarea");
+                    commentTextarea.classList.add("comment-input");
+                    commentTextarea.placeholder = "Commentaire";
+                    commentDiv.id = "comment-div-" + versionId;
+                    commentDiv.appendChild(commentTextarea);
+                    const commentButton = document.createElement("button");
+                    commentButton.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                    commentDiv.appendChild(commentButton);
+                    // Ending the creation of the comment div
+
+                    entry.appendChild(commentDiv);
+                    commentButton.addEventListener("click", async () => {
+                        const comment = commentTextarea.value;
+                        console.log(comment);
+                    });
                     entry.appendChild(rollbackButton);
-                    entry.addEventListener("click", async () => {
+                    rollbackButton.addEventListener("click", async () => {
                         // Show a confirmation dialog before performing the rollbac
                         const confirmation = confirm("Are you sure you want to rollback to this version?");
                         if (confirmation) {
