@@ -9,7 +9,9 @@ body {
 }
 
 * {
-    cursor: url("./assets/paw.svg") 0 0, auto;
+    cursor:
+        url("./assets/paw.svg") 0 0,
+        auto;
 }
 
 .filesModal .create {
@@ -50,12 +52,12 @@ body {
     align-items: center;
 }
 
-.filesModal .create .buttons>div p {
-    font-size: .9rem;
+.filesModal .create .buttons > div p {
+    font-size: 0.9rem;
     font-weight: 500;
     color: #2e2e2e;
     margin: 0;
-    margin-top: .5rem;
+    margin-top: 0.5rem;
     padding: 0;
     text-align: center;
 }
@@ -129,26 +131,26 @@ h1 {
     border-top: 1px solid #dcdcdc;
 }
 
-.list-item>.image-container {
+.list-item > .image-container {
     aspect-ratio: 5/6;
     overflow: hidden;
     padding: 20px;
     word-break: break-all;
 }
 
-.list-item>.image-container img {
+.list-item > .image-container img {
     width: calc(100% - 40px);
     height: 100%;
     object-fit: cover;
     border-radius: 5px;
 }
 
-.list-item>.image-container {
+.list-item > .image-container {
     font-size: 10% !important;
 }
 
 .document-info h2 {
-    font-size: .9rem;
+    font-size: 0.9rem;
     font-weight: 500;
     margin: 0;
     padding: 0;
@@ -160,7 +162,7 @@ h1 {
 }
 
 .document-info p {
-    font-size: .8rem;
+    font-size: 0.8rem;
     font-weight: 400;
     color: #949494;
     margin: 0;

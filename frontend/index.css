@@ -23,6 +23,11 @@ body {
     justify-content: center;
 }
 
+.modal .content {
+    padding: 40px;
+    text-align: center;
+}
+
 .openModal {
     height: 100vh;
     width: 100vw;

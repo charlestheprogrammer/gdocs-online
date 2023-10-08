@@ -4,23 +4,31 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title></title>
+        <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <link rel="stylesheet" href="../index.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
-        <script src="https://apis.google.com/js/platform.js" async defer></script>
-        <meta
-            name="google-signin-client_id"
-            content="636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com"
-        />
     </head>
 
     <body>
-        <div class="modal">
-            <div class="g-signin2" data-onsuccess="onSignIn"></div>
-        </div>
         <div class="openModal" style="display: none" onclick="closeOpenModal()">
             <div class="content">
                 <h1>Ouvrez un fichier</h1>
                 <ul id="availableFiles"></ul>
+            </div>
+        </div>
+        <div class="modal" style="display: none" id="unauthorizedModal">
+            <div class="content">
+                <h1>Vous n'avez pas l'autorisation de voir ce document</h1>
+                <p>
+                    Une demande vient d'être faite à tous les utilisateurs en ligne pour vous donnez le droit d'accès.
+                    Restez connecté ici.
+                </p>
+            </div>
+        </div>
+        <div class="modal" style="display: none" id="unreachableModal">
+            <div class="content">
+                <h1>Impossible de trouver ce document</h1>
+                <p>Vérfiez votre connexion à internet et que ce doument existe</p>
             </div>
         </div>
         <header>
@@ -40,7 +48,7 @@
             </div>
             <div id="connected_users">
                 <div>
-                    <img src="../assets/csimonmeunier.png" alt="" />
+                    <img src="" alt="" id="user_picture" />
                     <p id="user_name"></p>
                 </div>
             </div>
@@ -140,7 +148,7 @@
                 socket.send(
                     JSON.stringify({
                         type: "updateDocument",
-                        username: localStorage.getItem("username"),
+                        token: localStorage.getItem("token"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
                     })
@@ -155,62 +163,6 @@
                 let openModal = document.querySelector(".openModal");
                 openModal.style.display = "none";
             }
-
-            function onSignIn(googleUser) {
-                const profile = googleUser.getBasicProfile();
-                console.log("ID: " + profile.getId()); // Do not send to your backend! Use an ID token instead.
-                console.log("Name: " + profile.getName());
-                console.log("Image URL: " + profile.getImageUrl());
-                console.log("Email: " + profile.getEmail()); // This is null if the 'email' scope is not present.
-
-                fetch("http://localhost:3000/api/login", {
-                    body: JSON.stringify({
-                        username: profile.getName(),
-                    }),
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                })
-                    .then((res) => {
-                        let modal = document.querySelector(".modal");
-                        modal.style.display = "none";
-                        localStorage.setItem("username", profile.getName());
-                        document.getElementById("user_name").innerHTML = localStorage.getItem("username");
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                    });
-            }
-            /*
-        function identify() {
-          let username = document.getElementById("username").value;
-          if (username != "") {
-            fetch("http://localhost:3000/api/login", {
-              body: JSON.stringify({
-                username: userName,
-                image_url: userProfileImage
-              }),
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }).then((res) => {
-              let modal = document.querySelector(".modal");
-              modal.style.display = "none";
-              localStorage.setItem("username", userName);
-              localStorage.setItem("user_profile_image", userProfileImage);
-              document.getElementById("user_name").innerHTML = localStorage.getItem("username");
-              document.getElementById("user_profile_image").src = localStorage.getItem("user_profile_image");
-            }).catch((err) => {
-              console.log(err);
-            });
-          }
-        });
-      } else {
-        console.error('Erreur lors de la récupération des informations de profil.');
-      }
-    }*/
 
             Array.from(document.querySelectorAll("[contenteditable]")).forEach(function (element, index, array) {
                 element.addEventListener("input", function (event) {
@@ -230,15 +182,15 @@
 
             async function saveContentToDatabase(user, timestamp, content) {
                 try {
-                    const response = await fetch("http://localhost:3000/update", {
+                    const response = await fetch("http://macbook-pro-c.local:3000/update", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
+                            Authorization: localStorage.getItem("token"),
                         },
                         body: JSON.stringify({
                             documentId: localStorage.getItem("idDocument"),
                             content,
-                            user_name: user,
                             timestamp: timestamp,
                         }),
                     });
@@ -262,7 +214,7 @@
 
                 // Start a new timer to save the document after 2 seconds of inactivity
                 typingTimer = setTimeout(() => {
-                    const user_name = localStorage.getItem("username");
+                    const username = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
                     const options = {
@@ -288,17 +240,43 @@
             // Attach an event listener to the editable div for text input
             document.getElementById("page-content").addEventListener("input", saveDocumentOnTyping);
 
+            let userInfos = {
+                username: localStorage.getItem("username"),
+                image: localStorage.getItem("image"),
+            };
+
+            fetch("http://macbook-pro-c.local:3000/api/login", {
+                headers: {
+                    Authorization: localStorage.getItem("token"),
+                },
+            }).then((res) => {
+                if (!res.ok) {
+                    window.location.href = "../login/";
+                    return;
+                }
+                res.json().then((data) => {
+                    userInfos = {
+                        username: data.name,
+                        image: data.image_url,
+                    };
+                    localStorage.setItem("username", userInfos.username);
+                    localStorage.setItem("image", userInfos.image);
+                    document.getElementById("user_name").innerHTML = userInfos.username.split(" ")[0];
+                    document.getElementById("user_picture").src = userInfos.image;
+                });
+            });
+
             window.onload = () => {
-                document_content_element.focus();
-                if (localStorage.getItem("username") != null) {
-                    let modal = document.querySelector(".modal");
-                    modal.style.display = "none";
-                    document.getElementById("user_name").innerHTML = localStorage.getItem("username");
+                if (userInfos) {
+                    document.getElementById("user_name").innerHTML = userInfos.username.split(" ")[0];
+                    document.getElementById("user_picture").src = userInfos.image;
+                    document_content_element.focus();
+                    initSocket();
+                    if (localStorage.getItem("idDocument") != null) {
+                        openFile(localStorage.getItem("idDocument"));
+                    }
+                    updateTitle();
                 }
-                if (localStorage.getItem("idDocument") != null) {
-                    openFile(localStorage.getItem("idDocument"));
-                }
-                updateTitle();
             };
         </script>
     </body>

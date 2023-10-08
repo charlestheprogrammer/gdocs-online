@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    fetch("http://localhost:3000/api/documents")
+    fetch("http://macbook-pro-c.local:3000/api/documents")
         .then((res) => {
             res.json().then((body) => {
                 let filesModal = document.querySelector(".filesModal");
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         month: "short",
                         day: "numeric",
                     };
-                    lastModified.textContent = `${lastModifiedTime.toLocaleString('fr-FR', options)}`;
+                    lastModified.textContent = `${lastModifiedTime.toLocaleString("fr-FR", options)}`;
 
                     let imageContainer = document.createElement("div");
                     imageContainer.classList.add("image-container");
