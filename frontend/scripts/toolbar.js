@@ -163,6 +163,8 @@ function openFile(document_id) {
                 if (res.status === 401 || res.status === 403) {
                     document.getElementById("unauthorizedModal").style.display = "flex";
                     return;
+                } else {
+                    document.getElementById("unreachableModal").style.display = "flex";
                 }
                 return;
             }

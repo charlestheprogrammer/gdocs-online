@@ -57,7 +57,15 @@ router.get("/:document_id", async function (req, res) {
     }
     const document_id = req.params.document_id;
     var documentFound = await DocumentSchema.findById(document_id).exec();
+    if (!documentFound) {
+        res.status(404).json({ error: "Document non trouvé" });
+        return;
+    }
     var saveFound = await SaveSchema.findOne({ document: documentFound }).sort({ date: -1 }).exec();
+    if (!saveFound) {
+        res.status(404).json({ error: "Sauvegarde non trouvée" });
+        return;
+    }
     res.send({
         message: "Récupère ton contenu chacal",
         content: saveFound.content,
