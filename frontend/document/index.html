@@ -258,7 +258,7 @@
                     const username = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    if (!currentContent) localStorage.setItem("currentContent", pageContent);
+                    if (currentContent == null) localStorage.setItem("currentContent", pageContent);
                     // Generate a description of the changes (e.g., added/removed text)
                     if (pageContent !== currentContent) {
                         const changeDescription = generateChangeDescription(currentContent, pageContent);
@@ -274,30 +274,361 @@
                 }, 2000);
             }
 
-            function generateChangeDescription(currentContent, pageContent) {
-                const differences = diff(currentContent, pageContent);
-                let description = "";
+            function generateChangeDescription(oldContent, newContent) {
+                let description = ""; // Initialize an empty description
 
-                for (const [op, text] of differences) {
-                    if (op === 1) {
-                        description += `Added: "${text}" `;
-                    } else if (op === -1) {
-                        description += `Removed: "${text}" `;
+                //Check the number of the new line
+                const divWithBrRegex = /<div><br><\/div>/g;
+                const oldDivWithBrOccurrences = oldContent.match(divWithBrRegex);
+                const newDivWithBrOccurrences = newContent.match(divWithBrRegex);
+                //Check br tag in new content
+                let newDivWithBr = newDivWithBrOccurrences && newDivWithBrOccurrences.length > 0;
+                //Check br tag in old content
+                let oldDivWithBr = oldDivWithBrOccurrences && oldDivWithBrOccurrences.length > 0;
+                let brFlag = false;
+                if (newDivWithBr) {
+                    brFlag = true;
+                    if (!oldDivWithBr) {
+                        //Case when there is no br tag in old content
+                        let plural = newDivWithBrOccurrences.length > 1 ? "s" : "";
+                        description += `Added ${newDivWithBrOccurrences.length} newline${plural}.\n`;
+                    } else {
+                        let delta = newDivWithBrOccurrences.length - oldDivWithBrOccurrences.length;
+                        let deltaNb = Math.abs(delta);
+                        let plural = deltaNb > 1 ? "s" : "";
+                        //Case when we add br tag to the new content
+                        if (delta > 0) {
+                            description += `Added ${deltaNB} newline${plural}.\n`;
+                        } else if (delta < 0) {
+                            //Case where we remove br tag from the new content
+                            description += `Removed ${deltaNb} newline${plural}.\n`;
+                        } else {
+                            //Case where we don't change the number of br tag
+                            brFlag = false;
+                        }
+                    }
+                }
+                //Case we remove all the newlines
+                else if (oldDivWithBr) {
+                    brFlag = true;
+                    let plural = oldDivWithBrOccurrences.length > 1 ? "s" : "";
+                    description += `Removed ${oldDivWithBrOccurrences.length} newline${plural}.\n`;
+                }
+
+                if (oldContent == "" && newContent != "") {
+                    return "Add text: " + newContent + "\n";
+                }
+
+                // Check for additional cases and append to the description
+                const cases = [
+                    // Case: Change text to bold
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<b>") !== -1 &&
+                            newContent.indexOf("</b>") !== -1,
+                        result: () => {
+                            const newText = /<b>(.*?)<\/b>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Put to bold: "${newText}"\n`;
+                        },
+                    },
+                    // Case: Remove bold
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<b>") === -1 &&
+                            oldContent.indexOf("<b>") !== -1,
+                        result: () => {
+                            const oldText = /<b>(.*?)<\/b>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Remove bold: "${oldText}"\n`;
+                        },
+                    },
+                    // Case: Change text to italic
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<i>") !== -1 &&
+                            newContent.indexOf("</i>") !== -1,
+                        result: () => {
+                            const newText = /<i>(.*?)<\/i>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Put to italic: "${newText}"\n`;
+                        },
+                    },
+                    // Case: Remove italic
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<i>") === -1 &&
+                            oldContent.indexOf("<i>") !== -1,
+                        result: () => {
+                            const oldText = /<i>(.*?)<\/i>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Remove italic: "${oldText}"\n`;
+                        },
+                    },
+                    // Case: Change text to underline
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<u>") !== -1 &&
+                            newContent.indexOf("</u>") !== -1,
+                        result: () => {
+                            const newText = /<u>(.*?)<\/u>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Put to underline: "${newText}"\n`;
+                        },
+                    },
+                    // Case: Remove underline
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<u>") === -1 &&
+                            oldContent.indexOf("<u>") !== -1,
+                        result: () => {
+                            const oldText = /<u>(.*?)<\/u>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Remove underline: "${oldText}"\n`;
+                        },
+                    },
+                    // Case: Change text to strike
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<strike>") !== -1 &&
+                            newContent.indexOf("</strike>") !== -1,
+                        result: () => {
+                            const newText = /<strike>(.*?)<\/strike>/
+                                .exec(newContent)[1]
+                                .replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Put to strike: "${newText}"\n`;
+                        },
+                    },
+                    // Case: Remove strike
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<strike>") === -1 &&
+                            oldContent.indexOf("<strike>") !== -1,
+                        result: () => {
+                            const oldText = /<strike>(.*?)<\/strike>/
+                                .exec(oldContent)[1]
+                                .replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Remove strike: "${oldText}"\n`;
+                        },
+                    },
+                    // Case: Put to Sup
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<sup>") !== -1 &&
+                            newContent.indexOf("</sup>") !== -1,
+                        result: () => {
+                            const newText = /<sup>(.*?)<\/sup>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Put to Sup: "${newText}"\n`;
+                        },
+                    },
+                    // Case: Remove Sup
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<sup>") === -1 &&
+                            oldContent.indexOf("<sup>") !== -1,
+                        result: () => {
+                            const oldText = /<sup>(.*?)<\/sup>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Remove Sup: "${oldText}"\n`;
+                        },
+                    },
+                    // Case: Put to Sub
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<sub>") !== -1 &&
+                            newContent.indexOf("</sub>") !== -1,
+                        result: () => {
+                            const newText = /<sub>(.*?)<\/sub>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Put to Sub: "${newText}"\n`;
+                        },
+                    },
+                    // Case: Remove Sub
+                    {
+                        condition:
+                            !brFlag &&
+                            newContent !== oldContent &&
+                            newContent.indexOf("<sub>") === -1 &&
+                            oldContent.indexOf("<sub>") !== -1,
+                        result: () => {
+                            const oldText = /<sub>(.*?)<\/sub>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return `Remove Sub: "${oldText}"\n`;
+                        },
+                    },
+                    // Case: Change text title (from h1 to h6)
+                    {
+                        condition:
+                            /<h([1-6])>(.*?)<\/h[1-6]>/.test(newContent) &&
+                            (!/<h([1-6])>(.*?)<\/h[1-6]>/.test(oldContent) || // If oldContent doesn't have a heading tag
+                                /<h([1-6])>(.*?)<\/h[1-6]>/.exec(newContent)[1] !==
+                                    /<h([1-6])>(.*?)<\/h[1-6]>/.exec(oldContent)[1]),
+                        result: () => {
+                            const newHeadingLevel = /<h([1-6])>(.*?)<\/h[1-6]>/.exec(newContent)[1];
+                            const oldHeadingLevel = /<h([1-6])>(.*?)<\/h[1-6]>/.exec(oldContent)?.[1] || "1";
+                            const text = /<h([1-6])>(.*?)<\/h[1-6]>/.exec(newContent)[2];
+                            return `Change text title from h${oldHeadingLevel} to h${newHeadingLevel} "${text}"\n`;
+                        },
+                    },
+                    // Case: Change font (from Arial to another font)
+                    {
+                        condition: /face="(.*?)">(.*?)<\/font>/.test(newContent),
+                        result: () => {
+                            const oldFontMatches = [...oldContent.matchAll(/face="(.*?)">(.*?)<\/font>/g)];
+                            const newFontMatches = [...newContent.matchAll(/face="(.*?)">(.*?)<\/font>/g)];
+
+                            const fontChanges = [];
+
+                            // Compare oldFontMatches and newFontMatches to find font changes
+                            for (let i = 0; i < newFontMatches.length; i++) {
+                                if (!oldFontMatches[i] || oldFontMatches[i][1] !== newFontMatches[i][1]) {
+                                    // Font change detected
+                                    const fontName = newFontMatches[i][1];
+                                    const contentWithinFontTag = newFontMatches[i][2];
+                                    fontChanges.push(`Change font text to ${fontName}: "${contentWithinFontTag}"`);
+                                }
+                            }
+
+                            if (fontChanges.length > 0) {
+                                return fontChanges.join("\n") + "\n";
+                            } else if (!oldFontMatches[0]) {
+                                // If no font tag in oldContent, assume old font is Arial
+                                const newFontMatch = /<font face="(.*?)">(.*?)<\/font>/.exec(newContent);
+                                if (newFontMatch) {
+                                    const fontName = newFontMatch[1];
+                                    const contentWithinFontTag = newFontMatch[2];
+                                    return `Change font text from Arial to ${fontName}: "${contentWithinFontTag}"\n`;
+                                }
+                            }
+                        },
+                    },
+                    // Case: Change size (from 1 to 7)
+                    {
+                        condition: /size="(.*?)">(.*?)<\/font>/.test(newContent),
+                        result: () => {
+                            const oldSize = /<font[^>]*\s+size="(\d+)"[^>]*>(.*?)<\/font>/.exec(oldContent);
+                            const newSize = /<font[^>]*\s+size="(\d+)"[^>]*>(.*?)<\/font>/.exec(newContent);
+                            if (oldSize && newSize && oldSize[1] !== newSize[1]) {
+                                return `Change size text from ${oldSize[1]} to ${newSize[1]}\n`;
+                            } else if (!oldSize && newSize) return `Change size text to ${newSize[1]}\n`;
+                        },
+                    },
+
+                    // Case: Add color
+                    {
+                        condition: /color="(.*?)">(.*?)<\/font>/.test(newContent),
+                        result: () => {
+                            const newColor = /color="(.*?)">(.*?)<\/font>/.exec(newContent);
+                            return `Add color ${newColor[1]} to Text: "${newColor[2]}"\n`;
+                        },
+                    },
+                    // Case: Add background color
+                    {
+                        condition: /style="background-color: (.*?);"/.test(newContent),
+                        result: () => {
+                            const newBgColor = /style="background-color: (.*?);"/.exec(newContent);
+                            return `Add background color to Text: "${newBgColor[1]}"\n`;
+                        },
+                    },
+                    // Case: Align text (right, left, center)
+                    {
+                        condition: /align="(.*?)">/.test(newContent),
+                        result: () => {
+                            const oldAlignMatch = /align="(.*?)">/.exec(oldContent);
+                            const newAlignMatch = /align="(.*?)">/.exec(newContent);
+
+                            // If oldAlignMatch is null, assume the old alignment is empty or a default value
+                            const oldAlign = oldAlignMatch ? oldAlignMatch[1] : "left";
+
+                            if (newAlignMatch && oldAlign !== newAlignMatch[1]) {
+                                return `Align text to ${newAlignMatch[1]}\n`;
+                            }
+                            return null;
+                        },
+                    },
+                    // Case: Add Image
+                    {
+                        condition:
+                            /<img\s.*?>/.test(newContent) &&
+                            (!/<img\s.*?>/.test(oldContent) || !oldContent.includes(newContent)),
+                        result: () => {
+                            const newImages = newContent.match(/<img\s.*?>/g) || [];
+                            const oldImages = oldContent.match(/<img\s.*?>/g) || [];
+                            const addedImages = newImages.filter((image) => !oldContent.includes(image));
+
+                            if (addedImages.length > 0) {
+                                let plural = addedImages.length > 1 ? "s" : "";
+                                return `Add ${addedImages.length} image${plural}\n`;
+                            }
+                            return null;
+                        },
+                    },
+
+                    // Case: Remove Image
+                    {
+                        condition:
+                            /<img\s.*?>/.test(oldContent) &&
+                            (!/<img\s.*?>/.test(newContent) || !newContent.includes(oldContent)),
+                        result: () => {
+                            const newImages = newContent.match(/<img\s.*?>/g) || [];
+                            const oldImages = oldContent.match(/<img\s.*?>/g) || [];
+                            const removedImages = oldImages.filter((image) => !newContent.includes(image));
+
+                            if (removedImages.length > 0) {
+                                let plural = removedImages.length > 1 ? "s" : "";
+                                return `Remove ${removedImages.length} image${plural}\n`;
+                            }
+                            return null;
+                        },
+                    },
+                ];
+
+                cases.forEach((caseObj) => {
+                    if (caseObj.condition) {
+                        const result = typeof caseObj.result === "function" ? caseObj.result() : caseObj.result;
+                        if (result) {
+                            description += result;
+                        }
+                    }
+                    if (description == "") description = "Updated content\n";
+                });
+
+                //Case Add Text : remove all types of html tags
+                //Check what is new text added in old content
+                if (newContent.length > oldContent.length) {
+                    let newContentWithoutHtml = newContent.replace(/<[^>]*>/g, "");
+                    let oldContentWithoutHtml = oldContent.replace(/<[^>]*>/g, "");
+                    let addedText = newContentWithoutHtml.replace(oldContentWithoutHtml, "");
+                    if (addedText.length > 0) {
+                        description += `Add text: "${addedText}"\n`;
                     }
                 }
 
-                return description;
-            }
+                //Case Remove Text : remove all types of html tags
+                //Check what is new text removed in old content
+                if (newContent.length < oldContent.length) {
+                    let newContentWithoutHtml = newContent.replace(/<[^>]*>/g, "");
+                    let oldContentWithoutHtml = oldContent.replace(/<[^>]*>/g, "");
+                    let removedText = oldContentWithoutHtml.replace(newContentWithoutHtml, "");
+                    if (removedText.length > 0) {
+                        description += `Remove text: "${removedText}"\n`;
+                    }
+                }
 
-            // Create an instance of the diff_match_patch class
-            const dmp = new diff_match_patch();
-
-            function diff(oldText, newText) {
-                // Compute the differences
-                const diffs = dmp.diff_main(oldText, newText);
-                dmp.diff_cleanupSemantic(diffs); // Cleanup the differences for a more meaningful result
-
-                return diffs;
+                return description.trim(); // Trim any trailing newline character from the description
             }
 
             // Attach an event listener to the editable div for text input

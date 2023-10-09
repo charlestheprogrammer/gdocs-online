@@ -77,7 +77,7 @@ imageInput.addEventListener("change", () => {
                         resizeableImage.contentEditable = false;
                         document_content_element.appendChild(resizeableImage);
                         document_content_element.appendChild(document.createElement("br"));
-                        updateContent();
+                        saveDocumentOnTyping();
                     }, 700);
                 });
             })
@@ -123,6 +123,7 @@ const saveButtonFunction = async () => {
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "Enregistré !";
     }, 600);
+    localStorage.setItem("currentContent", document_content_element.innerHTML);
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "";
     }, 2000);
@@ -280,6 +281,7 @@ function openFile(document_id) {
             res.json().then((data) => {
                 document_title = data.document.title;
                 document_content_element.innerHTML = data.content;
+                localStorage.setItem("currentContent", document_content_element.innerHTML);
                 const origin =
                     localStorage.getItem("idDocument") == document_id ? null : localStorage.getItem("idDocument");
                 localStorage.setItem("idDocument", document_id);
@@ -328,7 +330,8 @@ const newDocumentFunction = async () => {
     document.querySelectorAll(".connected_user").forEach((user) => {
         user.remove();
     });
-    await saveButtonFunction();
+    await savButtonFunction();
+    localStorage.setItem("currentContent", document_content_element.innerHTML);
     socket.send(
         JSON.stringify({
             type: "joinDocument",
