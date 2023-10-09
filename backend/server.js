@@ -1,14 +1,9 @@
-require("dotenv").config();
-
 const axios = require("axios");
 const cors = require("cors");
 
 const { WebSocketServer } = require("ws");
 const { parseMessage, disconnect } = require("./routes/collaboration");
 const { verify } = require("./authentification");
-
-const port = process.env.PORT || 3000;
-const mongoURI = process.env.MONGO_URI;
 
 const express = require("express");
 const app = express();
@@ -66,7 +61,7 @@ app.use("/update", updateRouter);
 app.use("/images", imageRouter);
 app.use("/rights", rightsRouter);
 
-async function startServer() {
+async function startServer(port, mongoURI) {
     // Connexion à la base de données
     try {
         await db.connectToDB(mongoURI);
@@ -234,8 +229,6 @@ async function startServer() {
     });
 }
 
-startServer();
-
 // Gestion de la terminaison du serveur
 process.on("SIGINT", () => {
     db.closeDB();
@@ -243,7 +236,15 @@ process.on("SIGINT", () => {
     process.exit();
 });
 
+const stopServer = () => {
+    db.closeDB();
+    console.log("Arrêt du serveur");
+    process.exit();
+};
+
 module.exports = {
     app,
     wss,
+    startServer,
+    stopServer,
 };

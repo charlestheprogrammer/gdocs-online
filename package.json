@@ -4,7 +4,8 @@
     "scripts": {
         "format": "prettier --write ./frontend ./backend",
         "prettier:check:ci": "prettier --check ./frontend ./backend",
-        "start": "cd backend && npm start"
+        "start": "cd backend && npm start",
+        "test": "cd backend && npm run test"
     },
     "pre-commit": [
         "prettier:check:ci"
