@@ -18,6 +18,7 @@ test:
   image: node:20.0.0-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_BRANCH != 'main'
   script:
     - npm install --prefix ./backend
     - npm run test --prefix ./backend
