@@ -1,5 +1,6 @@
 stages:
   - lint 💄
+  - test 🧪
   - deploy 🚀
 
 lint:
@@ -8,6 +9,13 @@ lint:
   script:
     - npx prettier -c ./frontend/**/*.js ./frontend/**/*.html
     - npx prettier -c ./backend/**/*.js
+
+test:
+  stage: test 🧪
+  image: node:20.0.0-alpine
+  script:
+    - npm install --prefix ./backend
+    - npm run test --prefix ./backend
 
 deploy_to_s3:
   stage: deploy 🚀
