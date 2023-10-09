@@ -114,7 +114,7 @@ const saveButtonFunction = async () => {
             content: document_content_element.innerHTML,
         }),
         method: "POST",
-        headers: { "Content-Type": "application/json", token: localStorage.getItem("token") },
+        headers: { "Content-Type": "application/json", Authorization: localStorage.getItem("token") },
     });
     document.getElementById("temp_info").innerHTML = "Enregistrement...";
     const response = await responseAsync;
@@ -322,6 +322,7 @@ const newDocumentFunction = async () => {
     document_title = "Nouveau document";
     document_content_element.innerHTML = "";
     const origin = localStorage.getItem("idDocument");
+    localStorage.removeItem("idDocument");
     updateTitle();
     document.querySelector(".users_cursors").innerHTML = "";
     document.querySelectorAll(".connected_user").forEach((user) => {
