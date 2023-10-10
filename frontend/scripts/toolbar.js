@@ -15,6 +15,7 @@ const user_colors = [
 ];
 let document_content = "";
 let document_content_element = document.getElementById("page-content");
+let document_version_panel = document.getElementById("change-list");
 let optionsButtons = document.querySelectorAll(".option-button");
 let fontSizeRef = document.getElementById("fontSize");
 let advancedOptionButton = document.querySelectorAll(".adv-option-button");
@@ -26,6 +27,12 @@ const toggleHistory = document.getElementById("toggle_history");
 let saveButton = document.getElementById("save");
 let openButton = document.getElementById("open");
 let newButton = document.getElementById("new");
+const options = {
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+};
 
 const modifyText = (command, defaultUi, value) => {
     document.execCommand(command, defaultUi, value);
@@ -52,7 +59,7 @@ imageInput.addEventListener("change", () => {
         const resizeableImage = document.createElement("div");
         resizeableImage.classList.add("resizeable_div");
         const img = new Image();
-        fetch("http://macbook-pro-c.local:3000/images/upload", {
+        fetch("http://localhost:3000/images/upload", {
             method: "POST",
             body: JSON.stringify({
                 base64Image: reader.result,
@@ -70,7 +77,7 @@ imageInput.addEventListener("change", () => {
                         resizeableImage.contentEditable = false;
                         document_content_element.appendChild(resizeableImage);
                         document_content_element.appendChild(document.createElement("br"));
-                        updateContent();
+                        saveDocumentOnTyping();
                     }, 700);
                 });
             })
@@ -99,8 +106,8 @@ colorsOptionButton.forEach((button) => {
     });
 });
 
-const savButtonFunction = async () => {
-    const responseAsync = fetch("http://macbook-pro-c.local:3000/save", {
+const saveButtonFunction = async () => {
+    const responseAsync = fetch("http://localhost:3000/save", {
         body: JSON.stringify({
             id: localStorage.getItem("idDocument"),
             title: document_title,
@@ -116,15 +123,16 @@ const savButtonFunction = async () => {
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "Enregistré !";
     }, 600);
+    localStorage.setItem("currentContent", document_content_element.innerHTML);
     setTimeout(() => {
         document.getElementById("temp_info").innerHTML = "";
     }, 2000);
 };
 
-saveButton.addEventListener("click", savButtonFunction);
+saveButton.addEventListener("click", saveButtonFunction);
 
 openButton.addEventListener("click", () => {
-    fetch("http://macbook-pro-c.local:3000/api/documents")
+    fetch("http://localhost:3000/api/documents")
         .then((res) => {
             res.json().then((body) => {
                 let openModal = document.querySelector(".openModal");
@@ -148,12 +156,157 @@ openButton.addEventListener("click", () => {
         });
 });
 
+async function displayDocumentVersionsonOpen() {
+    const changeList = document.getElementById("change-list");
+    changeList.innerHTML = ""; // Clear any previous entries
+
+    try {
+        const documentId = localStorage.getItem("idDocument");
+
+        if (!documentId) {
+            console.error("Document ID is not available in localStorage");
+            return;
+        }
+
+        const response = await fetch(`http://localhost:3000/getDocumentUpdates/${documentId}`);
+        if (response.ok) {
+            const versions = await response.json();
+            versions.forEach((version) => {
+                const versionId = version._id;
+                const entry = document.createElement("div");
+                entry.classList.add("change_entry");
+                entry.innerHTML = `<p>Le ${new Date(version.timestamp).toLocaleString("fr-FR", options)}</p>
+                    <p>${version.user.name} : ${version.description ? version.description : "Updated content"}</p>
+                `;
+                const commentsDiv = document.createElement("div");
+                commentsDiv.classList.add("comments");
+                // Display comments if available
+                if (version.comments && version.comments.length > 0) {
+                    version.comments.forEach((comment) => {
+                        const commentDiv = document.createElement("div");
+                        commentDiv.classList.add("comment-display");
+                        commentDiv.innerHTML = `
+                            <p class="comment-user">${comment.user}</p>
+                            <p class="comment-timestamp">${new Date(comment.timestamp).toLocaleString(
+                                "fr-FR",
+                                options
+                            )}</p>
+                            <p class="comment-text">${comment.content}</p>
+                        `;
+                        commentsDiv.appendChild(commentDiv);
+                    });
+
+                    entry.appendChild(commentsDiv);
+                }
+                entry.appendChild(commentsDiv);
+                changeList.appendChild(entry);
+
+                if (versionId !== null) {
+                    entry.dataset.versionId = versionId;
+                    const rollbackButton = document.createElement("button");
+                    rollbackButton.innerText = "Rollback";
+                    rollbackButton.classList.add("rollback-button");
+
+                    // Creating the comment div
+                    const commentDiv = document.createElement("div");
+                    commentDiv.classList.add("comment-div");
+                    const commentTextarea = document.createElement("textarea");
+                    commentTextarea.classList.add("comment-input");
+                    commentTextarea.placeholder = "Commentaire";
+                    commentDiv.id = "comment-div-" + versionId;
+                    commentDiv.appendChild(commentTextarea);
+                    const commentButton = document.createElement("button");
+                    commentButton.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                    commentButton.classList.add("comment-button");
+                    commentDiv.appendChild(commentButton);
+                    // Ending the creation of the comment div
+
+                    entry.appendChild(commentDiv);
+                    commentButton.addEventListener("click", async () => {
+                        const comment = commentTextarea.value;
+                        const commentResponse = await saveCommentToDatabase(
+                            versionId,
+                            localStorage.getItem("username"),
+                            comment
+                        );
+                        if (commentResponse._id != null) {
+                            commentTextarea.value = "";
+                            const commentDisplayDiv = document.createElement("div");
+                            commentDisplayDiv.classList.add("comment-display");
+                            // Add user information, timestamp, and text to the div
+                            commentDisplayDiv.innerHTML = `
+                                <p class="comment-user">${commentResponse.user}</p>
+                                <p class="comment-timestamp">${new Date(commentResponse.timestamp).toLocaleString(
+                                    "fr-FR",
+                                    options
+                                )}</p>
+                                <p class="comment-text">${commentResponse.content}</p>
+                            `;
+                            // Find the corresponding "change entry" div and append the comment display div to it
+                            const versionEntryDiv = document.querySelector(`[data-version-id="${versionId}"]`);
+                            if (versionEntryDiv) {
+                                const commentDiv = versionEntryDiv.querySelector(".comments");
+                                if (commentDiv) {
+                                    commentDiv.appendChild(commentDisplayDiv);
+                                }
+                            }
+                        }
+                    });
+                    entry.appendChild(rollbackButton);
+                    rollbackButton.addEventListener("click", async () => {
+                        // Show a confirmation dialog before performing the rollbac
+                        const confirmation = confirm("Are you sure you want to rollback to this version?");
+                        if (confirmation) {
+                            rollbackToVersion(versionId);
+                        }
+                    });
+                }
+            });
+        } else {
+            console.error("Failed to fetch document versions");
+        }
+    } catch (error) {
+        console.error("Error fetching document versions:", error);
+    }
+}
+
 function toggleHistoryPannel() {
     changeHistory.classList.toggle("open");
+    displayDocumentVersionsonOpen();
+}
+function rollbackToVersion(versionId) {
+    // Make a request to retrieve the specific version content
+    fetch(`http://localhost:3000/getUpdate/${versionId}`)
+        .then((response) => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("Failed to retrieve version content");
+            }
+        })
+        .then((version) => {
+            if (version && version.content) {
+                // Update the page content
+                document.getElementById("page-content").innerHTML = version.content;
+
+                // Create a new version entry with rollback description
+                addToChangeHistory(
+                    localStorage.getItem("username"),
+                    new Date(),
+                    `Rollback to version: ${versionId}`,
+                    version.content
+                );
+
+                saveButtonFunction();
+            }
+        })
+        .catch((error) => {
+            console.error("Error rolling back to version:", error);
+        });
 }
 
 function openFile(document_id) {
-    fetch("http://macbook-pro-c.local:3000/openFile/" + document_id, {
+    fetch(`http://localhost:3000/openFile/${document_id}`, {
         headers: {
             Authorization: localStorage.getItem("token"),
         },
@@ -171,6 +324,7 @@ function openFile(document_id) {
             res.json().then((data) => {
                 document_title = data.document.title;
                 document_content_element.innerHTML = data.content;
+                localStorage.setItem("currentContent", document_content_element.innerHTML);
                 const origin =
                     localStorage.getItem("idDocument") == document_id ? null : localStorage.getItem("idDocument");
                 localStorage.setItem("idDocument", document_id);
@@ -195,16 +349,69 @@ function openFile(document_id) {
         });
 }
 
+function attachRollbackListener() {
+    const rollbackButtons = document.querySelectorAll(".rollback-button");
+    rollbackButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const versionId = button.parentElement.dataset.versionId;
+            // Show a confirmation dialog before performing the rollback
+            const confirmation = confirm("Are you sure you want to rollback to this version?");
+            if (confirmation) {
+                rollbackToVersion(versionId);
+            }
+        });
+    });
+}
+
+async function attachCommentListener() {
+    const commentButtons = document.querySelectorAll(".comment-button");
+    commentButtons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            const commentTextarea = button.parentElement.querySelector(".comment-input");
+            const comment = commentTextarea.value;
+            const versionId = button.parentElement.parentElement.dataset.versionId;
+            const user = localStorage.getItem("username");
+            try {
+                const [commentId, version] = await saveCommentToDatabase(versionId, user, comment);
+                if (commentId != null) {
+                    commentTextarea.value = "";
+                    const commentDisplayDiv = document.createElement("div");
+                    commentDisplayDiv.classList.add("comment-display");
+                    // Add user information, timestamp, and text to the div
+                    commentDisplayDiv.innerHTML = `
+                        <p class="comment-user">${user}</p>
+                        <p class="comment-timestamp">${new Date().toLocaleString("fr-FR", options)}</p>
+                        <p class="comment-text">${comment}</p>
+                    `;
+                    // Find the corresponding "change entry" div and append the comment display div to it
+                    const versionEntryDiv = document.querySelector(`[data-version-id="${versionId}"]`);
+                    if (versionEntryDiv) {
+                        const commentDiv = versionEntryDiv.querySelector(".comment-div");
+                        if (commentDiv) {
+                            commentDiv.appendChild(commentDisplayDiv);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error saving comment:", error);
+                // Handle the error as needed
+            }
+        });
+    });
+}
+
 const newDocumentFunction = async () => {
     document_title = "Nouveau document";
     document_content_element.innerHTML = "";
     const origin = localStorage.getItem("idDocument");
+    localStorage.removeItem("idDocument");
     updateTitle();
     document.querySelector(".users_cursors").innerHTML = "";
     document.querySelectorAll(".connected_user").forEach((user) => {
         user.remove();
     });
-    await savButtonFunction();
+    await saveButtonFunction();
+    localStorage.setItem("currentContent", document_content_element.innerHTML);
     socket.send(
         JSON.stringify({
             type: "joinDocument",
