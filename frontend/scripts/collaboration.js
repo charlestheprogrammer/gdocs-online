@@ -71,7 +71,7 @@ function userJoin(data) {
 let socket;
 
 function initSocket() {
-    socket = new WebSocket("ws://macbook-pro-c.local:3001");
+    socket = new WebSocket("ws://localhost:3001");
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type !== "cursorPosition") {
@@ -146,6 +146,10 @@ function initSocket() {
                 token: localStorage.getItem("token"),
             })
         );
+        if (localStorage.getItem("idDocument") != null) {
+            openFile(localStorage.getItem("idDocument"));
+        }
+        updateTitle();
     };
 
     socket.onclose = () => {

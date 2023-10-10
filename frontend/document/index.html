@@ -7,6 +7,7 @@
         <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <link rel="stylesheet" href="../index.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
     </head>
 
     <body>
@@ -144,13 +145,13 @@
             }
 
             function updateContent() {
-                document_content = document_content_element.value;
                 socket.send(
                     JSON.stringify({
                         type: "updateDocument",
                         token: localStorage.getItem("token"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
+                        version: document_version_panel.innerHTML,
                     })
                 );
             }
@@ -170,19 +171,75 @@
                 });
             });
 
-            function addToChangeHistory(user, timestamp, isotimestamp, changeDescription, pageContent) {
+            async function addToChangeHistory(user, timestamp, changeDescription, pageContent) {
+                const versionId = await saveContentToDatabase(timestamp.toISOString(), pageContent, changeDescription);
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
                 entry.classList.add("change_entry");
+                const commentsDiv = document.createElement("div");
+                commentsDiv.classList.add("comments");
 
-                entry.innerHTML = `<p>${timestamp.toLocaleString("fr-FR")}</p><p>${user}</p>`;
+                entry.innerHTML = `<p>Le ${timestamp.toLocaleString(
+                    "fr-FR",
+                    options
+                )}</p><p>${user} : ${changeDescription}</p>`;
+
+                entry.appendChild(commentsDiv);
                 changeList.prepend(entry);
-                saveContentToDatabase(user, isotimestamp, pageContent);
+
+                if (versionId !== null) {
+                    entry.dataset.versionId = versionId;
+                    const rollbackButton = document.createElement("button");
+                    rollbackButton.innerText = "Rollback";
+                    rollbackButton.classList.add("rollback-button");
+
+                    // Creating the comment div
+                    const commentDiv = document.createElement("div");
+                    commentDiv.classList.add("comment-div");
+                    const commentTextarea = document.createElement("textarea");
+                    commentTextarea.classList.add("comment-input");
+                    commentTextarea.placeholder = "Commentaire";
+                    commentDiv.id = "comment-div-" + versionId;
+                    commentDiv.appendChild(commentTextarea);
+                    const commentButton = document.createElement("button");
+                    commentButton.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+                    rollbackButton.classList.add("comment-button");
+                    commentDiv.appendChild(commentButton);
+                    // Ending the creation of the comment div
+                    commentsDiv.appendChild(commentDiv);
+                    entry.appendChild(commentDiv);
+                    commentButton.addEventListener("click", async () => {
+                        const comment = commentTextarea.value;
+                        const commentResponse = await saveCommentToDatabase(versionId, user, comment);
+                        if (commentResponse._id != null) {
+                            commentTextarea.value = "";
+                            const commentDisplayDiv = document.createElement("div");
+                            commentDisplayDiv.classList.add("comment-display");
+                            // Add user information, timestamp, and text to the div
+                            commentDisplayDiv.innerHTML = `
+                                <p class="comment-user">${commentResponse.user}</p>
+                                <p class="comment-timestamp">${timestamp.toLocaleString("fr-FR", options)}</p>
+                                <p class="comment-text">${comment}</p>
+                            `;
+                            commentsDiv.appendChild(commentDisplayDiv);
+                        }
+                    });
+
+                    entry.appendChild(rollbackButton);
+                    rollbackButton.addEventListener("click", async () => {
+                        // Show a confirmation dialog before performing the rollback
+                        const confirmation = confirm("Are you sure you want to rollback to this version?");
+                        if (confirmation) {
+                            rollbackToVersion(versionId);
+                        }
+                    });
+                }
+                updateContent();
             }
 
-            async function saveContentToDatabase(user, timestamp, content) {
+            async function saveContentToDatabase(timestamp, content, description) {
                 try {
-                    const response = await fetch("http://macbook-pro-c.local:3000/update", {
+                    const response = await fetch("http://localhost:3000/update", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -192,16 +249,52 @@
                             documentId: localStorage.getItem("idDocument"),
                             content,
                             timestamp: timestamp,
+                            description: description,
                         }),
                     });
 
                     if (response.ok) {
+                        const responseData = await response.json();
                         console.log("Content saved to the database");
+                        return responseData.version._id;
                     } else {
                         console.error("Failed to save content to the database");
+                        return null;
                     }
                 } catch (error) {
                     console.error("Error saving content to the database:", error);
+                    return null;
+                }
+            }
+
+            async function saveCommentToDatabase(versionId, user, content) {
+                const timestamp = new Date().toISOString();
+                try {
+                    const response = await fetch(`http://localhost:3000/comment`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: localStorage.getItem("token"),
+                        },
+                        body: JSON.stringify({
+                            versionId: versionId,
+                            content: content,
+                            timestamp: timestamp,
+                            user: user,
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const responseData = await response.json();
+                        console.log("Comment saved to the database");
+                        return responseData.comment;
+                    } else {
+                        console.error("Failed to save comment to the database");
+                        return null;
+                    }
+                } catch (error) {
+                    console.error("Error saving comment to the database:", error);
+                    return null;
                 }
             }
 
@@ -217,24 +310,291 @@
                     const username = localStorage.getItem("username");
                     const currentContent = localStorage.getItem("currentContent");
                     const pageContent = document.getElementById("page-content").innerHTML;
-                    const options = {
-                        month: "long",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                    };
-
+                    const timestamp = new Date();
+                    if (currentContent == null) localStorage.setItem("currentContent", pageContent);
+                    // Generate a description of the changes (e.g., added/removed text)
                     if (pageContent !== currentContent) {
-                        addToChangeHistory(
-                            user_name,
-                            new Date().toLocaleString("fr-FR", options),
-                            new Date().toISOString(),
-                            "Updated content",
-                            pageContent
-                        );
+                        const changeDescription = generateChangeDescription(currentContent, pageContent);
+                        addToChangeHistory(username, timestamp, changeDescription, pageContent);
                         localStorage.setItem("currentContent", pageContent);
                     }
                 }, 2000);
+            }
+
+            // Define a function to detect and format changes between old and new content
+            function detectAndFormatChanges(oldContent, newContent) {
+                // Define regular expressions for different formatting tags
+                const tagRegexMap = {
+                    "<b>": /<b>(.*?)<\/b>/g,
+                    "<i>": /<i>(.*?)<\/i>/g,
+                    "<u>": /<u>(.*?)<\/u>/g,
+                    "<strike>": /<strike>(.*?)<\/strike>/g,
+                    "<sup>": /<sup>(.*?)<\/sup>/g,
+                    "<sub>": /<sub>(.*?)<\/sub>/g,
+                };
+                const tagToDescription = {
+                    "<b>": "bold",
+                    "<i>": "italic",
+                    "<u>": "underline",
+                    "<strike>": "strike",
+                    "<sup>": "superscript",
+                    "<sub>": "subscript",
+                };
+
+                let formattedChanges = "";
+
+                // Iterate over each formatting tag and compare old and new content
+                for (const tag in tagRegexMap) {
+                    const description = tagToDescription[tag];
+                    const regex = tagRegexMap[tag];
+                    const oldMatches = [...oldContent.matchAll(regex)];
+                    const newMatches = [...newContent.matchAll(regex)];
+
+                    oldMatches.forEach((oldMatch) => {
+                        const oldText = oldMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+
+                        // Check if this old text exists in new content
+                        const newTextMatch = newMatches.find((newMatch) => {
+                            const newText = newMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return newText === oldText;
+                        });
+
+                        if (!newTextMatch) {
+                            // Text is removed or changed, apply formatting
+                            formattedChanges += `Remove ${description}: "${oldText}"\n`;
+                        }
+                    });
+
+                    newMatches.forEach((newMatch) => {
+                        const newText = newMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+
+                        // Check if this new text exists in old content
+                        const oldTextMatch = oldMatches.find((oldMatch) => {
+                            const oldText = oldMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return oldText === newText;
+                        });
+
+                        if (!oldTextMatch) {
+                            // Text is added or changed, apply formatting
+                            formattedChanges += `Put to ${description}: "${newText}"\n`;
+                        }
+                    });
+                }
+
+                return formattedChanges;
+            }
+
+            function generateChangeDescription(oldContent, newContent) {
+                let description = ""; // Initialize an empty description
+
+                //Check the number of the new line
+                const divWithBrRegex = /<div><br><\/div>/g;
+                const oldDivWithBrOccurrences = oldContent.match(divWithBrRegex);
+                const newDivWithBrOccurrences = newContent.match(divWithBrRegex);
+                //Check br tag in new content
+                let newDivWithBr = newDivWithBrOccurrences && newDivWithBrOccurrences.length > 0;
+                //Check br tag in old content
+                let oldDivWithBr = oldDivWithBrOccurrences && oldDivWithBrOccurrences.length > 0;
+                let brFlag = false;
+                if (newDivWithBr) {
+                    brFlag = true;
+                    if (!oldDivWithBr) {
+                        //Case when there is no br tag in old content
+                        let plural = newDivWithBrOccurrences.length > 1 ? "s" : "";
+                        description += `Added ${newDivWithBrOccurrences.length} newline${plural}.\n`;
+                    } else {
+                        let delta = newDivWithBrOccurrences.length - oldDivWithBrOccurrences.length;
+                        let deltaNb = Math.abs(delta);
+                        let plural = deltaNb > 1 ? "s" : "";
+                        //Case when we add br tag to the new content
+                        if (delta > 0) {
+                            description += `Added ${deltaNB} newline${plural}.\n`;
+                        } else if (delta < 0) {
+                            //Case where we remove br tag from the new content
+                            description += `Removed ${deltaNb} newline${plural}.\n`;
+                        } else {
+                            //Case where we don't change the number of br tag
+                            brFlag = false;
+                        }
+                    }
+                }
+                //Case we remove all the newlines
+                else if (oldDivWithBr) {
+                    brFlag = true;
+                    let plural = oldDivWithBrOccurrences.length > 1 ? "s" : "";
+                    description += `Removed ${oldDivWithBrOccurrences.length} newline${plural}.\n`;
+                }
+
+                if (oldContent == "" && newContent != "") {
+                    return "Add text: " + newContent + "\n";
+                }
+
+                if (!brFlag) {
+                    description += detectAndFormatChanges(oldContent, newContent);
+                }
+
+                // Check for additional cases and append to the description
+                const cases = [
+                    // Case: Change text title (from h1 to h6)
+                    {
+                        condition:
+                            /<h([1-6])>(.*?)<\/h[1-6]>/.test(newContent) &&
+                            (!/<h([1-6])>(.*?)<\/h[1-6]>/.test(oldContent) || // If oldContent doesn't have a heading tag
+                                /<h([1-6])>(.*?)<\/h[1-6]>/.exec(newContent)[1] !==
+                                    /<h([1-6])>(.*?)<\/h[1-6]>/.exec(oldContent)[1]),
+                        result: () => {
+                            const newHeadingLevel = /<h([1-6])>(.*?)<\/h[1-6]>/.exec(newContent)[1];
+                            const oldHeadingLevel = /<h([1-6])>(.*?)<\/h[1-6]>/.exec(oldContent)?.[1] || "1";
+                            const text = /<h([1-6])>(.*?)<\/h[1-6]>/.exec(newContent)[2];
+                            return `Change text title from h${oldHeadingLevel} to h${newHeadingLevel} "${text}"\n`;
+                        },
+                    },
+                    // Case: Change font (from Arial to another font)
+                    {
+                        condition: /face="(.*?)">(.*?)<\/font>/.test(newContent),
+                        result: () => {
+                            const oldFontMatches = [...oldContent.matchAll(/face="(.*?)">(.*?)<\/font>/g)];
+                            const newFontMatches = [...newContent.matchAll(/face="(.*?)">(.*?)<\/font>/g)];
+
+                            const fontChanges = [];
+
+                            // Compare oldFontMatches and newFontMatches to find font changes
+                            for (let i = 0; i < newFontMatches.length; i++) {
+                                if (!oldFontMatches[i] || oldFontMatches[i][1] !== newFontMatches[i][1]) {
+                                    // Font change detected
+                                    const fontName = newFontMatches[i][1];
+                                    const contentWithinFontTag = newFontMatches[i][2];
+                                    fontChanges.push(`Change font text to ${fontName}: "${contentWithinFontTag}"`);
+                                }
+                            }
+
+                            if (fontChanges.length > 0) {
+                                return fontChanges.join("\n") + "\n";
+                            } else if (!oldFontMatches[0]) {
+                                // If no font tag in oldContent, assume old font is Arial
+                                const newFontMatch = /<font face="(.*?)">(.*?)<\/font>/.exec(newContent);
+                                if (newFontMatch) {
+                                    const fontName = newFontMatch[1];
+                                    const contentWithinFontTag = newFontMatch[2];
+                                    return `Change font text from Arial to ${fontName}: "${contentWithinFontTag}"\n`;
+                                }
+                            }
+                        },
+                    },
+                    // Case: Change size (from 1 to 7)
+                    {
+                        condition: /size="(.*?)">(.*?)<\/font>/.test(newContent),
+                        result: () => {
+                            const oldSize = /<font[^>]*\s+size="(\d+)"[^>]*>(.*?)<\/font>/.exec(oldContent);
+                            const newSize = /<font[^>]*\s+size="(\d+)"[^>]*>(.*?)<\/font>/.exec(newContent);
+                            if (oldSize && newSize && oldSize[1] !== newSize[1]) {
+                                return `Change size text from ${oldSize[1]} to ${newSize[1]}\n`;
+                            } else if (!oldSize && newSize) return `Change size text to ${newSize[1]}\n`;
+                        },
+                    },
+
+                    // Case: Add color
+                    {
+                        condition: /color="(.*?)">(.*?)<\/font>/.test(newContent),
+                        result: () => {
+                            const newColor = /color="(.*?)">(.*?)<\/font>/.exec(newContent);
+                            return `Add color ${newColor[1]} to Text: "${newColor[2]}"\n`;
+                        },
+                    },
+                    // Case: Add background color
+                    {
+                        condition: /style="background-color: (.*?);"/.test(newContent),
+                        result: () => {
+                            const newBgColor = /style="background-color: (.*?);"/.exec(newContent);
+                            return `Add background color to Text: "${newBgColor[1]}"\n`;
+                        },
+                    },
+                    // Case: Align text (right, left, center)
+                    {
+                        condition: /align="(.*?)">/.test(newContent),
+                        result: () => {
+                            const oldAlignMatch = /align="(.*?)">/.exec(oldContent);
+                            const newAlignMatch = /align="(.*?)">/.exec(newContent);
+
+                            // If oldAlignMatch is null, assume the old alignment is empty or a default value
+                            const oldAlign = oldAlignMatch ? oldAlignMatch[1] : "left";
+
+                            if (newAlignMatch && oldAlign !== newAlignMatch[1]) {
+                                return `Align text to ${newAlignMatch[1]}\n`;
+                            }
+                            return null;
+                        },
+                    },
+                    // Case: Add Image
+                    {
+                        condition:
+                            /<img\s.*?>/.test(newContent) &&
+                            (!/<img\s.*?>/.test(oldContent) || !oldContent.includes(newContent)),
+                        result: () => {
+                            const newImages = newContent.match(/<img\s.*?>/g) || [];
+                            const oldImages = oldContent.match(/<img\s.*?>/g) || [];
+                            const addedImages = newImages.filter((image) => !oldContent.includes(image));
+
+                            if (addedImages.length > 0) {
+                                let plural = addedImages.length > 1 ? "s" : "";
+                                return `Add ${addedImages.length} image${plural}\n`;
+                            }
+                            return null;
+                        },
+                    },
+
+                    // Case: Remove Image
+                    {
+                        condition:
+                            /<img\s.*?>/.test(oldContent) &&
+                            (!/<img\s.*?>/.test(newContent) || !newContent.includes(oldContent)),
+                        result: () => {
+                            const newImages = newContent.match(/<img\s.*?>/g) || [];
+                            const oldImages = oldContent.match(/<img\s.*?>/g) || [];
+                            const removedImages = oldImages.filter((image) => !newContent.includes(image));
+
+                            if (removedImages.length > 0) {
+                                let plural = removedImages.length > 1 ? "s" : "";
+                                return `Remove ${removedImages.length} image${plural}\n`;
+                            }
+                            return null;
+                        },
+                    },
+                ];
+
+                cases.forEach((caseObj) => {
+                    if (caseObj.condition) {
+                        const result = typeof caseObj.result === "function" ? caseObj.result() : caseObj.result;
+                        if (result) {
+                            description += result;
+                        }
+                    }
+                    if (description === "") description = "Updated content\n";
+                });
+
+                //Case Add Text : remove all types of html tags
+                //Check what is new text added in old content
+                if (newContent.length > oldContent.length) {
+                    let newContentWithoutHtml = newContent.replace(/<[^>]*>/g, "");
+                    let oldContentWithoutHtml = oldContent.replace(/<[^>]*>/g, "");
+                    let addedText = newContentWithoutHtml.replace(oldContentWithoutHtml, "");
+                    if (addedText.length > 0) {
+                        description += `: Added text = "${addedText}"\n`;
+                    }
+                }
+
+                //Case Remove Text : remove all types of html tags
+                //Check what is new text removed in old content
+                if (newContent.length < oldContent.length) {
+                    let newContentWithoutHtml = newContent.replace(/<[^>]*>/g, "");
+                    let oldContentWithoutHtml = oldContent.replace(/<[^>]*>/g, "");
+                    let removedText = oldContentWithoutHtml.replace(newContentWithoutHtml, "");
+                    if (removedText.length > 0) {
+                        description += `: Removed text = "${removedText}"\n`;
+                    }
+                }
+
+                return description.trim(); // Trim any trailing newline character from the description
             }
 
             // Attach an event listener to the editable div for text input
@@ -245,7 +605,7 @@
                 image: localStorage.getItem("image"),
             };
 
-            fetch("http://macbook-pro-c.local:3000/api/login", {
+            fetch("http://localhost:3000/api/login", {
                 headers: {
                     Authorization: localStorage.getItem("token"),
                 },
@@ -272,10 +632,6 @@
                     document.getElementById("user_picture").src = userInfos.image;
                     document_content_element.focus();
                     initSocket();
-                    if (localStorage.getItem("idDocument") != null) {
-                        openFile(localStorage.getItem("idDocument"));
-                    }
-                    updateTitle();
                 }
             };
         </script>
