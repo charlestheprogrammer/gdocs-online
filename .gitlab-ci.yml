@@ -8,7 +8,7 @@ lint:
   image: node:20.0.0-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_BRANCH != 'main'
+    - if: $CI_COMMIT_BRANCH != 'main'
   script:
     - npx prettier -c ./frontend/**/*.js ./frontend/**/*.html
     - npx prettier -c ./backend/**/*.js
@@ -18,7 +18,7 @@ test:
   image: node:20.0.0-alpine
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-    - if: $CI_BRANCH != 'main'
+    - if: $CI_COMMIT_BRANCH != 'main'
   script:
     - npm install --prefix ./backend
     - npm run test --prefix ./backend
@@ -27,6 +27,6 @@ deploy_to_s3:
   stage: deploy 🚀
   image: registry.gitlab.com/gitlab-org/cloud-deploy/aws-base:latest
   rules:
-    - if: $CI_BRANCH == 'main' && $CI_PIPELINE_SOURCE == 'push'
+    - if: $CI_COMMIT_BRANCH == 'main' && $CI_PIPELINE_SOURCE == 'push'
   script:
     - aws s3 sync frontend/ s3://nlpf-frontend-website --delete
