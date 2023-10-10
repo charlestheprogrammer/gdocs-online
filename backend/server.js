@@ -26,6 +26,7 @@ var saveRouter = require("./routes/save");
 var updateRouterMiddleware = require("./routes/update");
 var versionsRouter = require("./routes/getDocumentUpdates");
 var singleVersionRouter = require("./routes/getUpdate");
+var commentVersionRouter = require("./routes/addComment");
 var imageRouter = require("./routes/images");
 var rightsRouter = require("./routes/rights");
 
@@ -68,6 +69,7 @@ app.use("/save", saveRouter);
 app.use("/update", updateRouterMiddleware(wss));
 app.use("/getDocumentUpdates", versionsRouter);
 app.use("/getUpdate", singleVersionRouter);
+app.use("/comment", commentVersionRouter);
 app.use("/images", imageRouter);
 app.use("/rights", rightsRouter);
 
