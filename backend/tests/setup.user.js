@@ -9,16 +9,16 @@ const setupTestUser = async () => {
     await testUser.save();
 
     const testUser2 = new UserSchema({
-        userId: "test-default2",
-        name: "Default Test User 2",
+        userId: "test-2",
+        name: "Test User 2",
         image_url: "test2",
     });
 
     await testUser2.save();
 
     const testUser3 = new UserSchema({
-        userId: "test-default3",
-        name: "Default Test User 3",
+        userId: "test-3",
+        name: "Test User 3",
         image_url: "test3",
     });
     await testUser3.save();
