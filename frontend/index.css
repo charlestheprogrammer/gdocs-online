@@ -427,18 +427,43 @@ header > div:last-of-type img:hover + p {
 }
 
 .comments {
-    background-color: #f0f0f0;
     padding: 10px;
-    border: 1px solid #ddd;
+    padding-left: 20px !important;
+    padding-top: 25px !important;
+    position: relative;
+    border-left: 2px solid #656565;
+    display: flex;
+    flex-direction: column;
 }
 /* Add a pseudo-element for the "Comments" title */
 .comments::before {
     content: "Comments"; /* Set the content to "Comments" */
-    background-color: #333;
-    color: white;
-    padding: 2px 10px;
-    border-top-left-radius: 5px; /* Round the top-left corner for style */
-    border-top-right-radius: 5px; /* Round the top-right corner for style */
+    color: #656565;
+    left: 5px;
+    top: 5px;
+    position: absolute;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.comments .comment-display:first-of-type {
+    padding-top: 0px;
+    border-top: 0px solid #cecece;
+}
+
+.comments .comment-display {
+    border-top: 1px solid #cecece;
+    padding: 5px 0px;
+}
+
+.comments .comment-timestamp {
+    font-size: 0.65rem !important;
+}
+
+.comments .comment-timestamp::before {
+    width: 5px !important;
+    height: 5px !important;
+    transform: translateY(-1.5px) !important;
 }
 
 .comment-div {
