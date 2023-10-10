@@ -6,13 +6,13 @@ const versionSchema = new mongoose.Schema({
         ref: "Document",
     },
     content: String,
-    comment: [String],
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
     },
     timestamp: Date,
     description: String,
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }], // Reference to comments
 });
 
 module.exports = mongoose.model("Version", versionSchema);

@@ -8,8 +8,8 @@ router.get("/:documentId", async function (req, res) {
         const documentId = req.params.documentId;
 
         // Find all versions of the specified document
-        const versions = await Version.find({ document: documentId }).populate("user").sort({
-            timestamp: 1,
+        const versions = await Version.find({ document: documentId }).populate("user").populate("comments").sort({
+            timestamp: -1,
         });
 
         res.set("Access-Control-Allow-Origin", "*");
