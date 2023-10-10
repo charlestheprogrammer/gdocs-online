@@ -176,12 +176,17 @@
                 const changeList = document.getElementById("change-list");
                 const entry = document.createElement("div");
                 entry.classList.add("change_entry");
+                const commentsDiv = document.createElement("div");
+                commentsDiv.classList.add("comments");
 
                 entry.innerHTML = `<p>Le ${timestamp.toLocaleString(
                     "fr-FR",
                     options
                 )}</p><p>${user} : ${changeDescription}</p>`;
+
+                entry.appendChild(commentsDiv);
                 changeList.prepend(entry);
+
                 if (versionId !== null) {
                     entry.dataset.versionId = versionId;
                     const rollbackButton = document.createElement("button");
@@ -201,7 +206,7 @@
                     rollbackButton.classList.add("comment-button");
                     commentDiv.appendChild(commentButton);
                     // Ending the creation of the comment div
-
+                    commentsDiv.appendChild(commentDiv);
                     entry.appendChild(commentDiv);
                     commentButton.addEventListener("click", async () => {
                         const comment = commentTextarea.value;
@@ -216,14 +221,7 @@
                                 <p class="comment-timestamp">${timestamp.toLocaleString("fr-FR", options)}</p>
                                 <p class="comment-text">${comment}</p>
                             `;
-                            // Find the corresponding "change entry" div and append the comment display div to it
-                            const versionEntryDiv = document.querySelector(`[data-version-id="${versionId}"]`);
-                            if (versionEntryDiv) {
-                                const commentDiv = versionEntryDiv.querySelector(".comment-div");
-                                if (commentDiv) {
-                                    commentDiv.appendChild(commentDisplayDiv);
-                                }
-                            }
+                            commentsDiv.appendChild(commentDisplayDiv);
                         }
                     });
 
@@ -270,7 +268,7 @@
             }
 
             async function saveCommentToDatabase(versionId, user, content) {
-                const timestamp = new Date();
+                const timestamp = new Date().toISOString();
                 try {
                     const response = await fetch(`http://localhost:3000/comment`, {
                         method: "POST",
@@ -281,7 +279,7 @@
                         body: JSON.stringify({
                             versionId: versionId,
                             content: content,
-                            timestamp: timestamp.toISOString(),
+                            timestamp: timestamp,
                             user: user,
                         }),
                     });
@@ -321,6 +319,69 @@
                         localStorage.setItem("currentContent", pageContent);
                     }
                 }, 2000);
+            }
+
+            // Define a function to detect and format changes between old and new content
+            function detectAndFormatChanges(oldContent, newContent) {
+                // Define regular expressions for different formatting tags
+                const tagRegexMap = {
+                    "<b>": /<b>(.*?)<\/b>/g,
+                    "<i>": /<i>(.*?)<\/i>/g,
+                    "<u>": /<u>(.*?)<\/u>/g,
+                    "<strike>": /<strike>(.*?)<\/strike>/g,
+                    "<sup>": /<sup>(.*?)<\/sup>/g,
+                    "<sub>": /<sub>(.*?)<\/sub>/g,
+                };
+                const tagToDescription = {
+                    "<b>": "bold",
+                    "<i>": "italic",
+                    "<u>": "underline",
+                    "<strike>": "strike",
+                    "<sup>": "superscript",
+                    "<sub>": "subscript",
+                };
+
+                let formattedChanges = "";
+
+                // Iterate over each formatting tag and compare old and new content
+                for (const tag in tagRegexMap) {
+                    const description = tagToDescription[tag];
+                    const regex = tagRegexMap[tag];
+                    const oldMatches = [...oldContent.matchAll(regex)];
+                    const newMatches = [...newContent.matchAll(regex)];
+
+                    oldMatches.forEach((oldMatch) => {
+                        const oldText = oldMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+
+                        // Check if this old text exists in new content
+                        const newTextMatch = newMatches.find((newMatch) => {
+                            const newText = newMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return newText === oldText;
+                        });
+
+                        if (!newTextMatch) {
+                            // Text is removed or changed, apply formatting
+                            formattedChanges += `Remove ${description}: "${oldText}"\n`;
+                        }
+                    });
+
+                    newMatches.forEach((newMatch) => {
+                        const newText = newMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+
+                        // Check if this new text exists in old content
+                        const oldTextMatch = oldMatches.find((oldMatch) => {
+                            const oldText = oldMatch[1].replace(/<\/?[^>]+(>|$)/g, "");
+                            return oldText === newText;
+                        });
+
+                        if (!oldTextMatch) {
+                            // Text is added or changed, apply formatting
+                            formattedChanges += `Put to ${description}: "${newText}"\n`;
+                        }
+                    });
+                }
+
+                return formattedChanges;
             }
 
             function generateChangeDescription(oldContent, newContent) {
@@ -368,156 +429,12 @@
                     return "Add text: " + newContent + "\n";
                 }
 
+                if (!brFlag) {
+                    description += detectAndFormatChanges(oldContent, newContent);
+                }
+
                 // Check for additional cases and append to the description
                 const cases = [
-                    // Case: Change text to bold
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<b>") !== -1 &&
-                            newContent.indexOf("</b>") !== -1,
-                        result: () => {
-                            const newText = /<b>(.*?)<\/b>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Put to bold: "${newText}"\n`;
-                        },
-                    },
-                    // Case: Remove bold
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<b>") === -1 &&
-                            oldContent.indexOf("<b>") !== -1,
-                        result: () => {
-                            const oldText = /<b>(.*?)<\/b>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Remove bold: "${oldText}"\n`;
-                        },
-                    },
-                    // Case: Change text to italic
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<i>") !== -1 &&
-                            newContent.indexOf("</i>") !== -1,
-                        result: () => {
-                            const newText = /<i>(.*?)<\/i>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Put to italic: "${newText}"\n`;
-                        },
-                    },
-                    // Case: Remove italic
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<i>") === -1 &&
-                            oldContent.indexOf("<i>") !== -1,
-                        result: () => {
-                            const oldText = /<i>(.*?)<\/i>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Remove italic: "${oldText}"\n`;
-                        },
-                    },
-                    // Case: Change text to underline
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<u>") !== -1 &&
-                            newContent.indexOf("</u>") !== -1,
-                        result: () => {
-                            const newText = /<u>(.*?)<\/u>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Put to underline: "${newText}"\n`;
-                        },
-                    },
-                    // Case: Remove underline
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<u>") === -1 &&
-                            oldContent.indexOf("<u>") !== -1,
-                        result: () => {
-                            const oldText = /<u>(.*?)<\/u>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Remove underline: "${oldText}"\n`;
-                        },
-                    },
-                    // Case: Change text to strike
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<strike>") !== -1 &&
-                            newContent.indexOf("</strike>") !== -1,
-                        result: () => {
-                            const newText = /<strike>(.*?)<\/strike>/
-                                .exec(newContent)[1]
-                                .replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Put to strike: "${newText}"\n`;
-                        },
-                    },
-                    // Case: Remove strike
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<strike>") === -1 &&
-                            oldContent.indexOf("<strike>") !== -1,
-                        result: () => {
-                            const oldText = /<strike>(.*?)<\/strike>/
-                                .exec(oldContent)[1]
-                                .replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Remove strike: "${oldText}"\n`;
-                        },
-                    },
-                    // Case: Put to Sup
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<sup>") !== -1 &&
-                            newContent.indexOf("</sup>") !== -1,
-                        result: () => {
-                            const newText = /<sup>(.*?)<\/sup>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Put to Sup: "${newText}"\n`;
-                        },
-                    },
-                    // Case: Remove Sup
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<sup>") === -1 &&
-                            oldContent.indexOf("<sup>") !== -1,
-                        result: () => {
-                            const oldText = /<sup>(.*?)<\/sup>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Remove Sup: "${oldText}"\n`;
-                        },
-                    },
-                    // Case: Put to Sub
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<sub>") !== -1 &&
-                            newContent.indexOf("</sub>") !== -1,
-                        result: () => {
-                            const newText = /<sub>(.*?)<\/sub>/.exec(newContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Put to Sub: "${newText}"\n`;
-                        },
-                    },
-                    // Case: Remove Sub
-                    {
-                        condition:
-                            !brFlag &&
-                            newContent !== oldContent &&
-                            newContent.indexOf("<sub>") === -1 &&
-                            oldContent.indexOf("<sub>") !== -1,
-                        result: () => {
-                            const oldText = /<sub>(.*?)<\/sub>/.exec(oldContent)[1].replace(/<\/?[^>]+(>|$)/g, "");
-                            return `Remove Sub: "${oldText}"\n`;
-                        },
-                    },
                     // Case: Change text title (from h1 to h6)
                     {
                         condition:
@@ -652,7 +569,7 @@
                             description += result;
                         }
                     }
-                    if (description == "") description = "Updated content\n";
+                    if (description === "") description = "Updated content\n";
                 });
 
                 //Case Add Text : remove all types of html tags
@@ -662,7 +579,7 @@
                     let oldContentWithoutHtml = oldContent.replace(/<[^>]*>/g, "");
                     let addedText = newContentWithoutHtml.replace(oldContentWithoutHtml, "");
                     if (addedText.length > 0) {
-                        description += `Add text: "${addedText}"\n`;
+                        description += `: Added text = "${addedText}"\n`;
                     }
                 }
 
@@ -673,7 +590,7 @@
                     let oldContentWithoutHtml = oldContent.replace(/<[^>]*>/g, "");
                     let removedText = oldContentWithoutHtml.replace(newContentWithoutHtml, "");
                     if (removedText.length > 0) {
-                        description += `Remove text: "${removedText}"\n`;
+                        description += `: Removed text = "${removedText}"\n`;
                     }
                 }
 

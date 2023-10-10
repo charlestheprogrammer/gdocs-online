@@ -178,11 +178,10 @@ async function displayDocumentVersionsonOpen() {
                 entry.innerHTML = `<p>Le ${new Date(version.timestamp).toLocaleString("fr-FR", options)}</p>
                     <p>${version.user.name} : ${version.description ? version.description : "Updated content"}</p>
                 `;
+                const commentsDiv = document.createElement("div");
+                commentsDiv.classList.add("comments");
                 // Display comments if available
                 if (version.comments && version.comments.length > 0) {
-                    const commentsDiv = document.createElement("div");
-                    commentsDiv.classList.add("comments");
-
                     version.comments.forEach((comment) => {
                         const commentDiv = document.createElement("div");
                         commentDiv.classList.add("comment-display");
@@ -195,11 +194,11 @@ async function displayDocumentVersionsonOpen() {
                             <p class="comment-text">${comment.content}</p>
                         `;
                         commentsDiv.appendChild(commentDiv);
-                        entry.appendChild(commentsDiv);
                     });
 
                     entry.appendChild(commentsDiv);
                 }
+                entry.appendChild(commentsDiv);
                 changeList.appendChild(entry);
 
                 if (versionId !== null) {
@@ -246,7 +245,7 @@ async function displayDocumentVersionsonOpen() {
                             // Find the corresponding "change entry" div and append the comment display div to it
                             const versionEntryDiv = document.querySelector(`[data-version-id="${versionId}"]`);
                             if (versionEntryDiv) {
-                                const commentDiv = versionEntryDiv.querySelector(".comment-div");
+                                const commentDiv = versionEntryDiv.querySelector(".comments");
                                 if (commentDiv) {
                                     commentDiv.appendChild(commentDisplayDiv);
                                 }
@@ -293,8 +292,7 @@ function rollbackToVersion(versionId) {
                 // Create a new version entry with rollback description
                 addToChangeHistory(
                     localStorage.getItem("username"),
-                    new Date().toLocaleString("fr-FR", options),
-                    new Date().toISOString(),
+                    new Date(),
                     `Rollback to version: ${versionId}`,
                     version.content
                 );
@@ -406,6 +404,7 @@ const newDocumentFunction = async () => {
     document_title = "Nouveau document";
     document_content_element.innerHTML = "";
     const origin = localStorage.getItem("idDocument");
+    localStorage.removeItem("idDocument");
     updateTitle();
     document.querySelector(".users_cursors").innerHTML = "";
     document.querySelectorAll(".connected_user").forEach((user) => {

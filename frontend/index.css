@@ -426,6 +426,21 @@ header > div:last-of-type img:hover + p {
     overflow: auto;
 }
 
+.comments {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+/* Add a pseudo-element for the "Comments" title */
+.comments::before {
+    content: "Comments"; /* Set the content to "Comments" */
+    background-color: #333;
+    color: white;
+    padding: 2px 10px;
+    border-top-left-radius: 5px; /* Round the top-left corner for style */
+    border-top-right-radius: 5px; /* Round the top-right corner for style */
+}
+
 .comment-div {
     display: flex;
     gap: 5px;
