@@ -5,7 +5,7 @@ const { startServer } = require("../server");
 
 // // Global setup file used for tests that will complete once before ALL test suites run
 const setup = async () => {
-    await startServer(3080, process.env.MONGO_URI_TEST);
+    await startServer(3080, process.env.MONGO_URI_TEST, false);
     await setupTestVersion();
     await setupTestUser();
 };

@@ -61,15 +61,16 @@ app.use("/update", updateRouter);
 app.use("/images", imageRouter);
 app.use("/rights", rightsRouter);
 
-async function startServer(port, mongoURI) {
+let server = null;
+
+async function startServer(port, mongoURI, verbose = true) {
     // Connexion à la base de données
     try {
-        await db.connectToDB(mongoURI);
+        await db.connectToDB(mongoURI, verbose);
     } catch (err) {
         console.error("Impossible de se connecter à la base de données :", err);
         process.exit(1);
     }
-    console.log("Connexion à la base de données réussie");
 
     // Définition des routes
 
@@ -224,27 +225,26 @@ async function startServer(port, mongoURI) {
     });
 
     // Lancement du serveur
-    app.listen(port, () => {
-        console.log(`Serveur en cours d'exécution sur le port ${port}`);
+    server = app.listen(port, () => {
+        if (verbose) console.log(`Serveur en cours d'exécution sur le port ${port}`);
     });
 }
 
 // Gestion de la terminaison du serveur
 process.on("SIGINT", () => {
-    db.closeDB();
-    console.log("Arrêt du serveur");
-    process.exit();
+    stopServer();
 });
 
-const stopServer = () => {
-    db.closeDB();
-    console.log("Arrêt du serveur");
-    process.exit();
+const stopServer = async (verbose = true) => {
+    await db.closeDB();
+    if (verbose) console.log("Arrêt du serveur");
+    server.close();
+    wss.close();
 };
 
 module.exports = {
-    app,
     wss,
     startServer,
     stopServer,
+    server,
 };
