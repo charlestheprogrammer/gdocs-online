@@ -1,14 +1,9 @@
-require("dotenv").config();
-
 const axios = require("axios");
 const cors = require("cors");
 
 const { WebSocketServer } = require("ws");
 const { parseMessage, disconnect } = require("./routes/collaboration");
 const { verify } = require("./authentification");
-
-const port = process.env.PORT || 3000;
-const mongoURI = process.env.MONGO_URI;
 
 const express = require("express");
 const app = express();
@@ -73,15 +68,16 @@ app.use("/comment", commentVersionRouter);
 app.use("/images", imageRouter);
 app.use("/rights", rightsRouter);
 
-async function startServer() {
+let server = null;
+
+async function startServer(port, mongoURI, verbose = true) {
     // Connexion à la base de données
     try {
-        await db.connectToDB(mongoURI);
+        await db.connectToDB(mongoURI, verbose);
     } catch (err) {
         console.error("Impossible de se connecter à la base de données :", err);
         process.exit(1);
     }
-    console.log("Connexion à la base de données réussie");
 
     // Définition des routes
 
@@ -245,21 +241,26 @@ async function startServer() {
     });
 
     // Lancement du serveur
-    app.listen(port, () => {
-        console.log(`Serveur en cours d'exécution sur le port ${port}`);
+    server = app.listen(port, () => {
+        if (verbose) console.log(`Serveur en cours d'exécution sur le port ${port}`);
     });
 }
 
-startServer();
-
 // Gestion de la terminaison du serveur
 process.on("SIGINT", () => {
-    db.closeDB();
-    console.log("Arrêt du serveur");
-    process.exit();
+    stopServer();
 });
 
+const stopServer = async (verbose = true) => {
+    await db.closeDB();
+    if (verbose) console.log("Arrêt du serveur");
+    server.close();
+    wss.close();
+};
+
 module.exports = {
-    app,
     wss,
+    startServer,
+    stopServer,
+    server,
 };
