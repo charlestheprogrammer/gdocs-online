@@ -70,6 +70,7 @@ if (imageInput)
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: localStorage.getItem("token"),
+                    email: localStorage.getItem("email"),
                 },
             })
                 .then((res) => {
@@ -117,7 +118,11 @@ const saveButtonFunction = async () => {
             content: document_content_element.innerHTML,
         }),
         method: "POST",
-        headers: { "Content-Type": "application/json", token: localStorage.getItem("token") },
+        headers: {
+            "Content-Type": "application/json",
+            token: localStorage.getItem("token"),
+            email: localStorage.getItem("email"),
+        },
     });
     document.getElementById("temp_info").innerHTML = "Enregistrement...";
     const response = await responseAsync;
@@ -313,6 +318,7 @@ function openFile(document_id) {
     fetch(`${API_URL}/openFile/${document_id}`, {
         headers: {
             Authorization: localStorage.getItem("token"),
+            email: localStorage.getItem("email"),
         },
     })
         .then((res) => {
@@ -336,6 +342,7 @@ function openFile(document_id) {
                     JSON.stringify({
                         type: "joinDocument",
                         token: localStorage.getItem("token"),
+                        email: localStorage.getItem("email"),
                         origin: origin,
                         destination: document_id,
                     })
@@ -420,6 +427,7 @@ const newDocumentFunction = async () => {
         JSON.stringify({
             type: "joinDocument",
             token: localStorage.getItem("token"),
+            email: localStorage.getItem("email"),
             origin: origin,
             destination: localStorage.getItem("idDocument"),
         })

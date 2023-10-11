@@ -45,6 +45,7 @@
             fetch(`${API_URL}/api/login`, {
                 headers: {
                     Authorization: localStorage.getItem("token"),
+                    email: localStorage.getItem("email"),
                 },
             }).then((res) => {
                 if (!res.ok) {
@@ -54,7 +55,7 @@
                     userInfos = {
                         username: data.name,
                         image: data.image_url,
-                        userId: data.userId,
+                        userId: data._id,
                     };
                     localStorage.setItem("username", userInfos.username);
                     localStorage.setItem("image", userInfos.image);
@@ -71,7 +72,11 @@
                         content: "",
                     }),
                     method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: localStorage.getItem("token") },
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: localStorage.getItem("token"),
+                        email: localStorage.getItem("email"),
+                    },
                 });
                 const response = await responseAsync;
                 const body = await response.json();

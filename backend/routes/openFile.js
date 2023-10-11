@@ -44,7 +44,7 @@ router.get("/:document_id", async function (req, res) {
                 if (!allowedUser.user) {
                     continue;
                 }
-                identifiedUsers[allowedUser.user.userId]?.socket.send(
+                identifiedUsers[allowedUser.user._id.toString()]?.socket.send(
                     JSON.stringify({
                         type: "requestRead",
                         document: req.params.document_id,
