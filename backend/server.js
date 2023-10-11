@@ -27,41 +27,10 @@ var rightsRouter = require("./routes/rights");
 
 const { identifiedUsers } = require("./misc/users");
 
-const wss = new WebSocketServer({ port: 3001 });
-
-wss.getUniqueID = function () {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000)
-            .toString(16)
-            .substring(1);
-    }
-    return s4() + s4() + "-" + s4();
-};
-
-const clients = [];
-
-wss.on("connection", function connection(ws) {
-    ws.id = wss.getUniqueID();
-    clients.push(ws);
-    console.log(clients.length + " clients connectés");
-    ws.on("error", console.error);
-
-    ws.on("close", function close() {
-        disconnect(ws, identifiedUsers);
-        clients.splice(clients.indexOf(ws), 1);
-        console.log(clients.length + " clients connectés");
-    });
-
-    ws.on("message", function message(data) {
-        parseMessage(ws, data, clients, identifiedUsers);
-    });
-});
-
 app.use(express.json());
 
 app.use("/openFile", openFileRouter);
 app.use("/save", saveRouter);
-app.use("/update", updateRouterMiddleware(wss));
 app.use("/getDocumentUpdates", versionsRouter);
 app.use("/getUpdate", singleVersionRouter);
 app.use("/comment", commentVersionRouter);
@@ -103,12 +72,12 @@ async function startServer(port, mongoURI, verbose = true) {
             }
 
             if (!existingItem) {
+                const imageRandom = Math.floor(Math.random() * 9) + 1;
                 const newUser = new User({
                     email,
                     password: token,
                     name: email.split("@")[0],
-                    image_url:
-                        "https://lh3.googleusercontent.com/a/ACg8ocKphLaRCXDdXR_xtZ0qpu6fidU2vkTcEMrQ8_Ue-obTwJc=s96-c",
+                    image_url: `https://pae-bpifrance.s3.eu-west-3.amazonaws.com/nlpf/pp/${imageRandom}.png`,
                 });
                 const user = await newUser.save();
                 res.status(201).send(JSON.stringify(user));
@@ -239,6 +208,41 @@ async function startServer(port, mongoURI, verbose = true) {
     server = app.listen(port, () => {
         if (verbose) console.log(`Serveur en cours d'exécution sur le port ${port}`);
     });
+
+    const wss = new WebSocketServer({
+        server,
+        path: "/collaboration",
+    });
+
+    app.use("/update", updateRouterMiddleware(wss));
+
+    wss.getUniqueID = function () {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + "-" + s4();
+    };
+
+    const clients = [];
+
+    wss.on("connection", function connection(ws) {
+        ws.id = wss.getUniqueID();
+        clients.push(ws);
+        console.log(clients.length + " clients connectés");
+        ws.on("error", console.error);
+
+        ws.on("close", function close() {
+            disconnect(ws, identifiedUsers);
+            clients.splice(clients.indexOf(ws), 1);
+            console.log(clients.length + " clients connectés");
+        });
+
+        ws.on("message", function message(data) {
+            parseMessage(ws, data, clients, identifiedUsers);
+        });
+    });
 }
 
 // Gestion de la terminaison du serveur
@@ -255,7 +259,6 @@ const stopServer = async (verbose = true) => {
 };
 
 module.exports = {
-    wss,
     startServer,
     stopServer,
     server,

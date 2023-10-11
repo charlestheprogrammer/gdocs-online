@@ -30,5 +30,5 @@ deploy_to_s3:
     - if: $CI_COMMIT_BRANCH == 'main' && $CI_PIPELINE_SOURCE == 'push'
   script:
     - sed -i -E 's/const API_URL = "(.*)"/const API_URL = "http:\/\/csimonmeunier.me:3000"/g' frontend/scripts/toolbar.js
-    - sed -i -E 's/const WS_URL = "(.*)"/const WS_URL = "ws:\/\/csimonmeunier.me:3001"/g' frontend/scripts/collaboration.js
+    - sed -i -E 's/const WS_URL = "(.*)"/const WS_URL = "ws:\/\/csimonmeunier.me:3000\/collaboration"/g' frontend/scripts/collaboration.js
     - aws s3 sync frontend/ s3://nlpf-frontend-website --delete

@@ -42,6 +42,9 @@
         <script src="./scripts/homePage.js"></script>
         <script src="./scripts/toolbar.js"></script>
         <script>
+            if (!localStorage.getItem("token") || !localStorage.getItem("email")) {
+                window.location.href = "./login/";
+            }
             fetch(`${API_URL}/api/login`, {
                 headers: {
                     Authorization: localStorage.getItem("token"),

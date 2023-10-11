@@ -1,5 +1,5 @@
 const page_holder = document.getElementById("page_holder");
-const WS_URL = "ws://localhost:3001/";
+const WS_URL = "ws://macbook-pro-c.local:3000/collaboration";
 let connected = false;
 
 page_holder.addEventListener("mousemove", function (event) {
@@ -22,6 +22,7 @@ page_holder.addEventListener("mousemove", function (event) {
             username: localStorage.getItem("userId"),
             name: localStorage.getItem("username"),
             document: localStorage.getItem("idDocument"),
+            image_url: localStorage.getItem("image"),
             data: {
                 x: x / pageSize.width,
                 y: y / pageSize.height,
@@ -32,6 +33,7 @@ page_holder.addEventListener("mousemove", function (event) {
 
 function manageNewCursorPosition(data) {
     if (document.getElementById("cursor_" + data.username) == null) {
+        console.log(data);
         let cursor = document.createElement("div");
         cursor.classList.add("cursor");
         cursor.id = "cursor_" + data.username;
@@ -40,6 +42,7 @@ function manageNewCursorPosition(data) {
         cursor.appendChild(p);
         document.querySelector(".users_cursors").appendChild(cursor);
         cursor.style.backgroundColor = user_colors[document.querySelector(".users_cursors").children.length - 1];
+        cursor.style.background = "url(" + data.image_url + ") center center / cover no-repeat";
         p.style.color = cursor.style.backgroundColor;
     }
     const cursor = document.getElementById("cursor_" + data.username);
