@@ -50,6 +50,21 @@ async function updateDocument(ws, message, identifiedUsers, user) {
 }
 
 async function switchDocument(ws, message, identifiedUsers, user) {
+    const connectedUsersOnDocument = [];
+    Object.keys(identifiedUsers).forEach((username) => {
+        if (identifiedUsers[username].document === message.destination && username !== ws.username) {
+            connectedUsersOnDocument.push(username);
+        }
+    });
+    if (connectedUsersOnDocument.length >= 10) {
+        ws.send(
+            JSON.stringify({
+                type: "documentFull",
+                document: message.destination,
+            })
+        );
+        return;
+    }
     identifiedUsers[user.userId] = {
         socket: ws,
         document: message.destination,

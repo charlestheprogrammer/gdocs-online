@@ -1,4 +1,5 @@
 const page_holder = document.getElementById("page_holder");
+const WS_URL = "ws://csimonmeunier.me:3001/";
 let connected = false;
 
 page_holder.addEventListener("mousemove", function (event) {
@@ -135,6 +136,11 @@ function initSocket() {
                 );
             });
             alert("You can't write");
+        } else if (data.type == "documentFull") {
+            alert("This document is full");
+            if (localStorage.getItem("idDocument") == data.document) {
+                window.location.href = "../";
+            }
         }
     };
 

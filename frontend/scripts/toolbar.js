@@ -1,3 +1,5 @@
+const API_URL = "http://localhost:3000";
+
 let fontList = ["Arial", "Verdana", "Times New Roman", "Garamond", "Georgia", "Courier New", "cursive"];
 const user_colors = [
     "#ffc8dd",
@@ -42,51 +44,52 @@ fontList.map((value) => {
     let option = document.createElement("option");
     option.value = value;
     option.innerHTML = value;
-    fontName.appendChild(option);
+    if (typeof fontName !== "undefined") fontName.appendChild(option);
 });
 
 for (let i = 1; i <= 7; i++) {
     let option = document.createElement("option");
     option.value = i;
     option.innerHTML = i;
-    fontSizeRef.appendChild(option);
+    if (fontSizeRef) fontSizeRef.appendChild(option);
 }
 
-imageInput.addEventListener("change", () => {
-    const file = imageInput.files[0];
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-        const resizeableImage = document.createElement("div");
-        resizeableImage.classList.add("resizeable_div");
-        const img = new Image();
-        fetch("http://localhost:3000/images/upload", {
-            method: "POST",
-            body: JSON.stringify({
-                base64Image: reader.result,
-            }),
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: localStorage.getItem("token"),
-            },
-        })
-            .then((res) => {
-                res.json().then((body) => {
-                    setTimeout(() => {
-                        img.src = body.image;
-                        resizeableImage.appendChild(img);
-                        resizeableImage.contentEditable = false;
-                        document_content_element.appendChild(resizeableImage);
-                        document_content_element.appendChild(document.createElement("br"));
-                        saveDocumentOnTyping();
-                    }, 700);
-                });
+if (imageInput)
+    imageInput.addEventListener("change", () => {
+        const file = imageInput.files[0];
+        const reader = new FileReader();
+        reader.addEventListener("load", () => {
+            const resizeableImage = document.createElement("div");
+            resizeableImage.classList.add("resizeable_div");
+            const img = new Image();
+            fetch(`${API_URL}/images/upload`, {
+                method: "POST",
+                body: JSON.stringify({
+                    base64Image: reader.result,
+                }),
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: localStorage.getItem("token"),
+                },
             })
-            .catch((err) => {
-                console.log(err);
-            });
+                .then((res) => {
+                    res.json().then((body) => {
+                        setTimeout(() => {
+                            img.src = body.image;
+                            resizeableImage.appendChild(img);
+                            resizeableImage.contentEditable = false;
+                            document_content_element.appendChild(resizeableImage);
+                            document_content_element.appendChild(document.createElement("br"));
+                            saveDocumentOnTyping();
+                        }, 700);
+                    });
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        });
+        reader.readAsDataURL(file);
     });
-    reader.readAsDataURL(file);
-});
 
 optionsButtons.forEach((button) => {
     button.addEventListener("click", () => {
@@ -107,7 +110,7 @@ colorsOptionButton.forEach((button) => {
 });
 
 const saveButtonFunction = async () => {
-    const responseAsync = fetch("http://localhost:3000/save", {
+    const responseAsync = fetch(`${API_URL}/save`, {
         body: JSON.stringify({
             id: localStorage.getItem("idDocument"),
             title: document_title,
@@ -129,32 +132,33 @@ const saveButtonFunction = async () => {
     }, 2000);
 };
 
-saveButton.addEventListener("click", saveButtonFunction);
+if (saveButton) saveButton.addEventListener("click", saveButtonFunction);
 
-openButton.addEventListener("click", () => {
-    fetch("http://localhost:3000/api/documents")
-        .then((res) => {
-            res.json().then((body) => {
-                let openModal = document.querySelector(".openModal");
-                openModal.style.display = "flex";
-                let availableFiles = document.getElementById("availableFiles");
-                availableFiles.innerHTML = "";
-                body.forEach((doc) => {
-                    let li = document.createElement("li");
-                    li.innerHTML = doc.title;
-                    li.addEventListener("click", () => {
-                        openFile(doc._id);
-                        let openModal = document.querySelector(".openModal");
-                        openModal.style.display = "none";
+if (openButton)
+    openButton.addEventListener("click", () => {
+        fetch(`${API_URL}/api/documents`)
+            .then((res) => {
+                res.json().then((body) => {
+                    let openModal = document.querySelector(".openModal");
+                    openModal.style.display = "flex";
+                    let availableFiles = document.getElementById("availableFiles");
+                    availableFiles.innerHTML = "";
+                    body.forEach((doc) => {
+                        let li = document.createElement("li");
+                        li.innerHTML = doc.title;
+                        li.addEventListener("click", () => {
+                            openFile(doc._id);
+                            let openModal = document.querySelector(".openModal");
+                            openModal.style.display = "none";
+                        });
+                        availableFiles.appendChild(li);
                     });
-                    availableFiles.appendChild(li);
                 });
+            })
+            .catch((err) => {
+                console.log(err);
             });
-        })
-        .catch((err) => {
-            console.log(err);
-        });
-});
+    });
 
 async function displayDocumentVersionsonOpen() {
     const changeList = document.getElementById("change-list");
@@ -168,7 +172,7 @@ async function displayDocumentVersionsonOpen() {
             return;
         }
 
-        const response = await fetch(`http://localhost:3000/getDocumentUpdates/${documentId}`);
+        const response = await fetch(`${API_URL}/getDocumentUpdates/${documentId}`);
         if (response.ok) {
             const versions = await response.json();
             versions.forEach((version) => {
@@ -276,7 +280,7 @@ function toggleHistoryPannel() {
 }
 function rollbackToVersion(versionId) {
     // Make a request to retrieve the specific version content
-    fetch(`http://localhost:3000/getUpdate/${versionId}`)
+    fetch(`${API_URL}/getUpdate/${versionId}`)
         .then((response) => {
             if (response.ok) {
                 return response.json();
@@ -306,7 +310,7 @@ function rollbackToVersion(versionId) {
 }
 
 function openFile(document_id) {
-    fetch(`http://localhost:3000/openFile/${document_id}`, {
+    fetch(`${API_URL}/openFile/${document_id}`, {
         headers: {
             Authorization: localStorage.getItem("token"),
         },
@@ -424,7 +428,10 @@ const newDocumentFunction = async () => {
 
 newButton.addEventListener("click", newDocumentFunction);
 
-document.getElementById("document_title").addEventListener("input", () => {
-    document_title = document.getElementById("document_title").value;
-    document.title = document_title + " - Cheetah Docs";
-});
+let _doc_title = document.getElementById("document_title");
+
+if (_doc_title)
+    _doc_title.addEventListener("input", () => {
+        document_title = _doc_title.value;
+        document.title = document_title + " - Gogole Dogs";
+    });

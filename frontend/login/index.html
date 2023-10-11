@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Authentification - Cheetah Docs</title>
+        <title>Authentification - Gogole Dogs</title>
         <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
         <link rel="stylesheet" href="./styles.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
@@ -13,6 +13,7 @@
             data-client_id="636019742869-f3msdnme8j56qbfpnincnbgact3n1hkt.apps.googleusercontent.com"
             data-callback="onSignIn"
         ></div>
+        <script src="../scripts/toolbar.js"></script>
     </head>
 
     <body>
@@ -25,7 +26,7 @@
                 });
             }
             function onSignIn(googleUser) {
-                fetch("http://localhost:3000/api/login", {
+                fetch(`${API_URL}/api/login`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
