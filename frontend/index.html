@@ -42,6 +42,8 @@
         <script src="./scripts/homePage.js"></script>
         <script src="./scripts/toolbar.js"></script>
         <script>
+            const joke =
+                "C'est 2 chiens qui discutent.<div>Il y en a un qui demande à l'autre:</div><div>- C'est quoi ton nom ?</div><div>- C'est Ché</div><div>- Ché ? C'est plutôt bizarre</div><div>- Ben, pourtant, mon maître me dit tout le temps \"va cher Ch\"</div>";
             if (!localStorage.getItem("token") || !localStorage.getItem("email")) {
                 window.location.href = "./login/";
             }
@@ -66,13 +68,13 @@
                 });
             });
 
-            async function newDocument() {
+            async function newDocument(content = false) {
                 localStorage.removeItem("idDocument");
                 const responseAsync = fetch(`${API_URL}/save`, {
                     body: JSON.stringify({
                         id: localStorage.getItem("idDocument"),
                         title: "Nouveau document",
-                        content: "",
+                        content: content ? joke : "",
                     }),
                     method: "POST",
                     headers: {

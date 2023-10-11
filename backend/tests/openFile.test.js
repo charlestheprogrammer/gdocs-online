@@ -5,6 +5,7 @@ describe("get /:idDocument", () => {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: "test-default",
+                email: "test-default",
             },
             body: JSON.stringify({
                 title: "Test document",
@@ -19,6 +20,7 @@ describe("get /:idDocument", () => {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: "test-default",
+                email: "test-default",
             },
         });
 
@@ -30,6 +32,7 @@ describe("get /:idDocument", () => {
             headers: {
                 "Content-Type": "application/json",
                 Authorization: "test-2",
+                email: "test-2",
             },
         });
         expect(response2.status).toBe(403);

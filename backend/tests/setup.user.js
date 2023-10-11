@@ -5,6 +5,7 @@ const setupTestUser = async () => {
         userId: "test-default",
         name: "Default Test User",
         image_url: "test",
+        email: "test-default",
     });
     await testUser.save();
 
@@ -12,6 +13,7 @@ const setupTestUser = async () => {
         userId: "test-2",
         name: "Test User 2",
         image_url: "test2",
+        email: "test-2",
     });
 
     await testUser2.save();
@@ -20,6 +22,7 @@ const setupTestUser = async () => {
         userId: "test-3",
         name: "Test User 3",
         image_url: "test3",
+        email: "test-3",
     });
     await testUser3.save();
 };

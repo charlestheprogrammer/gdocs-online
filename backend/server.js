@@ -39,6 +39,8 @@ app.use("/rights", rightsRouter);
 
 let server = null;
 
+let wss;
+
 async function startServer(port, mongoURI, verbose = true) {
     // Connexion à la base de données
     try {
@@ -209,7 +211,7 @@ async function startServer(port, mongoURI, verbose = true) {
         if (verbose) console.log(`Serveur en cours d'exécution sur le port ${port}`);
     });
 
-    const wss = new WebSocketServer({
+    wss = new WebSocketServer({
         server,
         path: "/collaboration",
     });
