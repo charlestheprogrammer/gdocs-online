@@ -1,5 +1,5 @@
 const page_holder = document.getElementById("page_holder");
-const WS_URL = "ws://macbook-pro-c.local:3000/collaboration";
+const WS_URL = "ws://csimonmeunier.me:3000/collaboration";
 let connected = false;
 
 page_holder.addEventListener("mousemove", function (event) {
