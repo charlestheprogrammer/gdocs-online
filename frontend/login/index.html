@@ -11,16 +11,19 @@
     </head>
 
     <body>
-        <input type="text" name="" id="email" />
-        <input type="password" name="" id="password" />
-        <button
-            onclick="onSignIn({
+        <div class="loginForm">
+            <h1>Authentification <br />(login et inscription)</h1>
+            <input type="text" name="" id="email" placeholder="Email" />
+            <input type="password" name="" id="password" placeholder="Mot de passe" />
+            <button
+                onclick="onSignIn({
             password: document.getElementById('password').value,
             email: document.getElementById('email').value,
         })"
-        >
-            Login
-        </button>
+            >
+                Login
+            </button>
+        </div>
 
         <script>
             if (localStorage.getItem("token") && localStorage.getItem("email")) {

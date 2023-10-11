@@ -1,4 +1,4 @@
-const API_URL = "http://macbook-pro-c.local:3000";
+const API_URL = "http://csimonmeunier.me:3000";
 
 let fontList = ["Arial", "Verdana", "Times New Roman", "Garamond", "Georgia", "Courier New", "cursive"];
 const user_colors = [
