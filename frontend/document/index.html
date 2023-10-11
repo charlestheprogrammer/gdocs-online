@@ -141,7 +141,7 @@
 
             function updateTitle() {
                 document.getElementById("document_title").value = document_title;
-                document.title = document_title + " - Cheetah Docs";
+                document.title = document_title + " - Gogole Dogs";
             }
 
             function updateContent() {
@@ -239,7 +239,7 @@
 
             async function saveContentToDatabase(timestamp, content, description) {
                 try {
-                    const response = await fetch("http://localhost:3000/update", {
+                    const response = await fetch(`${API_URL}/update`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -270,7 +270,7 @@
             async function saveCommentToDatabase(versionId, user, content) {
                 const timestamp = new Date().toISOString();
                 try {
-                    const response = await fetch(`http://localhost:3000/comment`, {
+                    const response = await fetch(`${API_URL}/comment`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -605,7 +605,7 @@
                 image: localStorage.getItem("image"),
             };
 
-            fetch("http://localhost:3000/api/login", {
+            fetch(`${API_URL}/api/login`, {
                 headers: {
                     Authorization: localStorage.getItem("token"),
                 },

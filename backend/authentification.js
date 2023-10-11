@@ -16,8 +16,8 @@ async function verify(token) {
 
 async function getAuthenticatedUser(req, isToken = false) {
     const token = isToken ? req : req.headers.authorization;
-    if (token.startsWith("test-")) return await UserSchema.findOne({ userId: token }).exec();
     if (!token) return null;
+    if (token.startsWith("test-")) return await UserSchema.findOne({ userId: token }).exec();
     let userId = null;
     try {
         userId = await verify(token);

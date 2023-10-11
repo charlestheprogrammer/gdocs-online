@@ -247,8 +247,9 @@ async function startServer(port, mongoURI, verbose = true) {
 }
 
 // Gestion de la terminaison du serveur
-process.on("SIGINT", () => {
-    stopServer();
+process.on("SIGINT", async () => {
+    await stopServer();
+    process.exit();
 });
 
 const stopServer = async (verbose = true) => {
