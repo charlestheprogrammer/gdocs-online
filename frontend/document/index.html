@@ -149,6 +149,7 @@
                     JSON.stringify({
                         type: "updateDocument",
                         token: localStorage.getItem("token"),
+                        email: localStorage.getItem("email"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
                         version: document_version_panel.innerHTML,
@@ -244,6 +245,7 @@
                         headers: {
                             "Content-Type": "application/json",
                             Authorization: localStorage.getItem("token"),
+                            email: localStorage.getItem("email"),
                         },
                         body: JSON.stringify({
                             documentId: localStorage.getItem("idDocument"),
@@ -275,6 +277,7 @@
                         headers: {
                             "Content-Type": "application/json",
                             Authorization: localStorage.getItem("token"),
+                            email: localStorage.getItem("email"),
                         },
                         body: JSON.stringify({
                             versionId: versionId,
@@ -608,6 +611,7 @@
             fetch(`${API_URL}/api/login`, {
                 headers: {
                     Authorization: localStorage.getItem("token"),
+                    email: localStorage.getItem("email"),
                 },
             }).then((res) => {
                 if (!res.ok) {

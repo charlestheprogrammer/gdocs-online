@@ -86,38 +86,31 @@ async function startServer(port, mongoURI, verbose = true) {
         res.set("Access-Control-Allow-Origin", "*");
 
         const token = req.headers.authorization;
-        if (!token || token === "") {
-            res.status(400).send("Token manquant");
-            return;
-        }
-        let userId = null;
-        try {
-            userId = await verify(token);
-        } catch (error) {
-            res.status(401).send(error);
-            return;
-        }
-
-        if (!userId) {
-            res.status(401).send("Token invalide");
+        const email = req.headers.email;
+        if (!token || token === "" || !email || email === "") {
+            res.status(400).send("Mot de passe manquant");
             return;
         }
 
         try {
-            const existingItem = await User.findOne({ userId: userId }).exec();
+            const existingItem = await User.findOne({ email, password: token }).exec();
+
+            const userRegistered = await User.findOne({ email }).exec();
+
+            if (userRegistered && !existingItem) {
+                res.status(401).send("Mot de passe incorrect");
+                return;
+            }
 
             if (!existingItem) {
-                const response = await axios.get("https://www.googleapis.com/oauth2/v3/tokeninfo", {
-                    params: { id_token: token },
+                const newUser = new User({
+                    email,
+                    password: token,
+                    name: email.split("@")[0],
+                    image_url:
+                        "https://lh3.googleusercontent.com/a/ACg8ocKphLaRCXDdXR_xtZ0qpu6fidU2vkTcEMrQ8_Ue-obTwJc=s96-c",
                 });
-
-                const tokenInfo = response.data;
-                const user = new User({
-                    userId: userId,
-                    name: tokenInfo.name,
-                    image_url: tokenInfo.picture,
-                });
-                await user.save();
+                const user = await newUser.save();
                 res.status(201).send(JSON.stringify(user));
                 return;
             } else {
@@ -125,7 +118,9 @@ async function startServer(port, mongoURI, verbose = true) {
                 return;
             }
         } catch (error) {
-            console.error("Erreur lors de la validation du token :", error);
+            console.error("Erreur lors de la recherche dans MongoDB :", error);
+            res.status(500).json({ error: "Erreur lors de la recherche dans la base de données" });
+            return;
         }
     });
 

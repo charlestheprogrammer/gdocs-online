@@ -1,5 +1,5 @@
 const page_holder = document.getElementById("page_holder");
-const WS_URL = "ws://csimonmeunier.me:3001/";
+const WS_URL = "ws://localhost:3001/";
 let connected = false;
 
 page_holder.addEventListener("mousemove", function (event) {
@@ -72,7 +72,7 @@ function userJoin(data) {
 let socket;
 
 function initSocket() {
-    socket = new WebSocket("ws://localhost:3001");
+    socket = new WebSocket(WS_URL);
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type !== "cursorPosition") {
@@ -104,6 +104,7 @@ function initSocket() {
                         document: data.document,
                         user: data.user,
                         token: localStorage.getItem("token"),
+                        email: localStorage.getItem("email"),
                     })
                 );
             }
@@ -118,6 +119,7 @@ function initSocket() {
                         document: data.document,
                         user: data.user,
                         token: localStorage.getItem("token"),
+                        email: localStorage.getItem("email"),
                     })
                 );
             }
@@ -130,6 +132,7 @@ function initSocket() {
                     JSON.stringify({
                         type: "updateDocument",
                         token: localStorage.getItem("token"),
+                        email: localStorage.getItem("email"),
                         document: localStorage.getItem("idDocument"),
                         content: document_content_element.innerHTML,
                     })
@@ -150,6 +153,7 @@ function initSocket() {
             JSON.stringify({
                 type: "identify",
                 token: localStorage.getItem("token"),
+                email: localStorage.getItem("email"),
             })
         );
         if (localStorage.getItem("idDocument") != null) {

@@ -31,7 +31,7 @@ async function updateDocument(ws, message, identifiedUsers, user) {
                 if (!allowedUser.user) {
                     continue;
                 }
-                identifiedUsers[allowedUser.user.userId]?.socket.send(
+                identifiedUsers[allowedUser.user._id.toString()]?.socket.send(
                     JSON.stringify({
                         type: "requestWrite",
                         document: message.document,
@@ -65,7 +65,7 @@ async function switchDocument(ws, message, identifiedUsers, user) {
         );
         return;
     }
-    identifiedUsers[user.userId] = {
+    identifiedUsers[user._id.toString()] = {
         socket: ws,
         document: message.destination,
     };
@@ -95,7 +95,7 @@ async function switchDocument(ws, message, identifiedUsers, user) {
         }
     });
     for (let i = 0; i < usersInDocument.length; i++) {
-        const user = await UserSchema.findOne({ userId: usersInDocument[i].username }).exec();
+        const user = await UserSchema.findById(usersInDocument[i].username).exec();
         usersInDocument[i].user = user;
     }
     ws.send(
@@ -108,7 +108,7 @@ async function switchDocument(ws, message, identifiedUsers, user) {
 
 function disconnect(ws, identifiedUsers) {
     Object.keys(identifiedUsers).forEach((username) => {
-        if (username !== ws.username) {
+        if (ws.username !== username) {
             identifiedUsers[username].socket.send(
                 JSON.stringify({
                     type: "leaveDocument",
@@ -118,11 +118,11 @@ function disconnect(ws, identifiedUsers) {
             );
         }
     });
-    delete identifiedUsers[ws.username];
+    delete identifiedUsers[ws.username?.toString()];
 }
 
 async function acceptRead(ws, message, identifiedUsers) {
-    const user = await UserSchema.findOne({ userId: message.user.userId }).exec();
+    const user = await UserSchema.findById(message.user._id).exec();
     const userResponsability = await new UserResponsabilitySchema({
         user: user._id,
         document: message.document,
@@ -137,7 +137,7 @@ async function acceptRead(ws, message, identifiedUsers) {
             },
         }
     ).exec();
-    identifiedUsers[message.user.userId].socket.send(
+    identifiedUsers[message.user._id].socket.send(
         JSON.stringify({
             type: "acceptRead",
             document: message.document,
@@ -146,7 +146,7 @@ async function acceptRead(ws, message, identifiedUsers) {
 }
 
 async function acceptWrite(ws, message, identifiedUsers) {
-    const user = await UserSchema.findOne({ userId: message.user.userId }).exec();
+    const user = await UserSchema.findById(message.user._id).exec();
     await UserResponsabilitySchema.updateOne(
         {
             user: user,
@@ -158,7 +158,7 @@ async function acceptWrite(ws, message, identifiedUsers) {
             },
         }
     ).exec();
-    identifiedUsers[message.user.userId].socket.send(
+    identifiedUsers[message.user._id].socket.send(
         JSON.stringify({
             type: "acceptWrite",
             document: message.document,
@@ -170,9 +170,15 @@ async function parseMessage(ws, message, clients, identifiedUsers) {
     const messageObject = JSON.parse(message);
     let user = null;
     if (messageObject.type !== "cursorPosition") {
-        user = await getAuthenticatedUser(messageObject.token, true);
+        user = await getAuthenticatedUser(
+            {
+                email: messageObject.email,
+                password: messageObject.token,
+            },
+            true
+        );
         if (user == null) return;
-        messageObject.username = user.userId;
+        messageObject.username = user._id.toString();
     }
     switch (messageObject.type) {
         case "cursorPosition":
@@ -188,8 +194,8 @@ async function parseMessage(ws, message, clients, identifiedUsers) {
             disconnect(ws, identifiedUsers);
             break;
         case "identify":
-            ws.username = user.userId;
-            identifiedUsers[user.userId] = {
+            ws.username = user._id.toString();
+            identifiedUsers[user._id.toString()] = {
                 socket: ws,
             };
             break;
